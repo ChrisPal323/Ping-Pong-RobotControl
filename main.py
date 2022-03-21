@@ -23,9 +23,9 @@ def init_arm(w):
                             [3, 6, 5], [3, 7, 5]])
 
     # Render colors for all
-    renderColors = np.array([[1, 0, 1, 1] for i in range(12)])
+    renderColors = np.array([[0.5, 0.3, 0.2, 1] for i in range(12)])
 
-    # -- Create Arm Base --
+    # --- Create Arm Base ---
     basePlateLength = 12  # in inches
     baseDistFromTable = -10.5
     basePlateThickness = 0.5
@@ -49,9 +49,9 @@ def init_arm(w):
 
     w.addItem(basePlate)
 
-    # -- Create Base Stands --
+    # --- Create Base Stands ---
     heightBaseStand = 12
-    widthBaseStand = 4
+    widthBaseStand = 3.5
     baseStandVerts = np.array([[widthBaseStand, 0, 0],  # 0
                                [0, 0, 0],  # 1
                                [0, widthBaseStand, 0],  # 2
@@ -72,11 +72,34 @@ def init_arm(w):
                          (ytable / 2) + (basePlateLength / 2) - widthBaseStand,
                          0)
     baseStand2.translate(baseDistFromTable - (widthBaseStand / 2) - (basePlateLength / 2),
-                         (ytable / 2) - widthBaseStand, 0)
+                         (ytable / 2) - (basePlateLength / 2), 0)
 
     # Add to frame
     w.addItem(baseStand1)
     w.addItem(baseStand2)
+
+    # --- Create Arm One ---
+    arm1Length = 20  # in inches
+    arm1Width = 1
+    arm1Verts = np.array([[basePlateLength, 0, 0],  # 0
+                          [0, 0, 0],  # 1
+                          [0, basePlateLength, 0],  # 2
+                          [0, 0, -basePlateThickness],  # 3
+                          [basePlateLength, basePlateLength, 0],  # 4
+                          [basePlateLength, basePlateLength, -basePlateThickness],  # 5
+                          [0, basePlateLength, -basePlateThickness],  # 6
+                          [basePlateLength, 0, -basePlateThickness]])  # 7
+
+    # Create same stands
+    basePlate = gl.GLMeshItem(vertexes=baseStandVerts, faces=renderFaces, faceColors=renderColors,
+                              drawEdges=True, edgeColor=(0, 0, 0, 1))
+
+    # Move stands to correct coord
+    basePlate.translate(baseDistFromTable - basePlateLength,
+                        (ytable / 2) - (basePlateLength / 2),
+                        0)
+
+    w.addItem(basePlate)
 
     return baseStand1
 
