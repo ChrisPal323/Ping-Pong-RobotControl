@@ -1,62 +1,77 @@
+import math
+import random
+import sys
+from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
-import matplotlib.pyplot as plt
-import mpl_toolkits.mplot3d.axes3d as p3
-import matplotlib.animation as animation
+import cv2
+from collections import deque
+from scipy.linalg import qr, svd
+import pyqtgraph.opengl as gl
+from pyqtgraph.Qt import QtGui
 
 
-# Generator Random Lines
-def Gen_RandLine(length, dims=2):
-    lineData = np.empty((dims, length))
-    lineData[:, 0] = np.random.rand(dims)
-    for index in range(1, length):
-        # scaling the random numbers by 0.1 so
-        # movement is small compared to position.
-        # subtraction by 0.5 is to change the range to [-0.5, 0.5]
-        # to allow a line to move backwards.
-        step = ((np.random.rand(dims) - 0.5) * 0.1)
-        lineData[:, index] = lineData[:, index - 1] + step
+# Numbers that work well (in inches) with the graph and keep proper proportions
+xtable = 108
+ytable = 60
 
-    return lineData
+xnet = 66
+ynet = 6  # Kinda like a z coord after 90 degree rotation
 
 
-# Update lines
-def update_lines(num, dataLines, lines):
-    for line, data in zip(lines, dataLines):
-        line.set_data(data[0:2, :num])
-        line.set_3d_properties(data[2, :num])
-    return lines
+# Init robot arm in frame
+def init_arm(w):
+
+    # -- Create Arm Base --
+    basePlate = 12
+    armBasePlate = gl.GLGridItem()  # Create base
+    armBasePlate.setColor((255, 0, 255, 255))
+    armBasePlate.translate(-10.5 - (basePlate / 2), (ytable / 2), 0)  # Move to correct coord
+    armBasePlate.setSize(basePlate, basePlate)  # Size table
+    w.addItem(armBasePlate)
+
+    return armBasePlate
 
 
 # Main Testing Loop
 def main():
-    # Attaching 3D axis to the figure
-    fig = plt.figure()
-    ax = p3.Axes3D(fig)
+    # ---- Set Up Window ----
+    app = QtGui.QApplication(sys.argv)  # Truthfully, don't know why we need this
+    w = gl.GLViewWidget()
+    w.opts['distance'] = 150
+    w.setWindowTitle('Ping-Pong Robot-Control')
+    w.setGeometry(0, 110, 1280, 720)
+    w.show()
 
-    # Fifty lines of random 3-D lines
-    data = [Gen_RandLine(100, 3) for index in range(100)]
+    # ---- Plot Table and Net ----
+    table = gl.GLGridItem()  # Create table
+    table.translate(xtable / 2, ytable / 2, 0)  # Move to correct coord
+    table.setSize(xtable, ytable)  # Size table
+    table.setSpacing(6, 6)  # Size grid spaces
+    w.addItem(table)  # Add table to view
 
-    # Creating fifty line objects.
-    # NOTE: Can't pass empty arrays into 3d version of plot()
-    lines = [ax.plot(dat[0, 1], dat[1, 1], dat[2, 1])[0] for dat in data]
+    net = gl.GLGridItem()  # Create net
+    net.rotate(90, 1, 0, 0)  # Rotate plain
+    net.rotate(90, 0, 0, 1)  # Rotate plain
+    net.translate(xtable / 2, ytable / 2, ynet / 2)  # Move to correct pos
+    net.setSize(xnet, ynet)  # Size table
+    w.addItem(net)  # Add table to view
 
-    # Setting the axes properties
-    ax.set_xlim3d([0.0, 1.0])
-    ax.set_xlabel('X')
+    # ---- Create Objects to be Moved / Plotted ----
 
-    ax.set_ylim3d([0.0, 1.0])
-    ax.set_ylabel('Y')
+    # Create arm
+    arm = init_arm(w)
 
-    ax.set_zlim3d([0.0, 1.0])
-    ax.set_zlabel('Z')
+    while True:
 
-    ax.set_title('3D Test')
+        # update arm
 
-    # Creating the Animation object
-    line_ani = animation.FuncAnimation(fig, update_lines, 25, fargs=(data, lines),
-                                       interval=1, blit=False)
 
-    plt.show()
+        # detect keys
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'):
+            break
+        elif key != 255:
+            print('KEY PRESS:', [chr(key)])
 
 
 # Run!
