@@ -70,8 +70,8 @@ class RobotArm:
         # Align with robot
         baseTransform = Transform3D()
         baseTransform.translate(baseDistFromTable - (basePlateLength / 2),
-                                     (self.ytable / 2),
-                                     0)
+                                (self.ytable / 2),
+                                0)
         # Transform to align with robot when other sides are done
         w.addItem(self.basePlate)
 
@@ -97,13 +97,13 @@ class RobotArm:
         self.baseStand1.translate(-widthBaseStand / 2,
                                   (basePlateLength / 2) - widthBaseStand,
                                   0)
+
         self.baseStand2.translate(-widthBaseStand / 2,
                                   -(basePlateLength / 2),
                                   0)
 
         # Custom method to transform and store transformations
         self.transformBase(baseTransform)
-        #self.rotateBase(45)
 
         # Add to frame
         w.addItem(self.baseStand1)
@@ -125,15 +125,24 @@ class RobotArm:
                               [arm1Width, 0, arm1Length]])  # 7
 
         # Create same stands
-        arm1 = gl.GLMeshItem(vertexes=arm1Verts, faces=renderFaces, faceColors=arm1Colors,
-                             drawEdges=True, edgeColor=(0, 0, 0, 1))
+        self.arm1 = gl.GLMeshItem(vertexes=arm1Verts, faces=renderFaces, faceColors=arm1Colors,
+                                  drawEdges=True, edgeColor=(0, 0, 0, 1))
 
-        # Move stands to correct coord
-        arm1.translate(baseDistFromTable - (basePlateLength / 2) - (arm1Width / 2),
-                       (self.ytable / 2) - (arm1Width / 2),
-                       arm1Height)
+        # Move stands to ORIGIN
+        self.arm1.translate(-(arm1Width / 2),
+                            -(arm1Width / 2),
+                            0)
 
-        w.addItem(arm1)
+        # Align with robot
+        arm1Transform = Transform3D()
+        arm1Transform.translate(baseDistFromTable - (basePlateLength / 2),
+                                (self.ytable / 2),
+                                arm1Height)
+        self.transformArm1(arm1Transform)
+        w.addItem(self.arm1)
+
+        self.rotateBase(34)
+        self.rotateArm1(34)
 
         # --- Create Arm Two ---
         arm2Length = 22  # in inches
@@ -211,6 +220,8 @@ class RobotArm:
 
         w.addItem(paddle)
 
+    # ------ Base Transforms --------
+
     # In goes a transformation mat
     # Effects all the other parts of the arm as well
     def transformBase(self, tr):
@@ -237,11 +248,35 @@ class RobotArm:
         self.baseStand1.applyTransform(self.transformMatrixList[0][-1], False)
         self.baseStand2.applyTransform(self.transformMatrixList[0][-1], False)
 
+        # TODO: Have other arms react
+        self.rotateArm1(deg, zAxis=True)
+
+    # ------ Arm 1 Transforms --------
+
     # In goes a transformation mat
     def transformArm1(self, tr):
         # Apply and save transform
-        self.transformArm1.applyTransform(tr, False)
+        self.arm1.applyTransform(tr, False)
         self.transformMatrixList[1].append(tr)
+
+    def rotateArm1(self, deg, zAxis=False):
+        # Center to origin
+        invMat, ret = self.transformMatrixList[1][-1].inverted()
+        self.arm1.applyTransform(invMat, False)
+
+        if not zAxis:
+            # Rotate
+            self.arm1.rotate(deg, 0, 1, 0)
+        else:
+            # Rotate TODO: FIX!
+            self.arm1.rotate(-deg, 1, 0, 0)
+
+        # Bring back to original cords
+        self.arm1.applyTransform(self.transformMatrixList[1][-1], False)
+
+        # TODO: Have other arms react
+
+    # ------ Arm 2 Transforms--------
 
     # In goes a transformation mat
     def transformArm2(self, tr):
@@ -249,8 +284,53 @@ class RobotArm:
         self.transformArm2.applyTransform(tr, False)
         self.transformMatrixList[2].append(tr)
 
+    def rotateArm3(self, deg, zAxis=False):
+        # Center to origin
+        invMat, ret = self.transformMatrixList[0][-1].inverted()
+        self.basePlate.applyTransform(invMat, False)
+
+        if not zAxis:
+            # Rotate
+            self.arm1.rotate(deg, 0, 1, 0)
+        else:
+            # Rotate
+            self.arm1.rotate(deg, 0, 0, 1)
+
+        # Bring back to original cords
+        self.basePlate.applyTransform(self.transformMatrixList[0][-1], False)
+
+        # TODO: Have other arms react
+
+    # ------ Arm 3 Transforms--------
+
     # In goes a transformation mat
     def transformArm3(self, tr):
         # Apply and save transform
         self.transformArm3.applyTransform(tr, False)
         self.transformMatrixList[3].append(tr)
+
+    def rotateArm3X(self, deg):
+        # Center to origin
+        invMat, ret = self.transformMatrixList[0][-1].inverted()
+        self.basePlate.applyTransform(invMat, False)
+
+        # Rotate
+        self.basePlate.rotate(deg, 0, 0, 1)
+
+        # Bring back to original cords
+        self.basePlate.applyTransform(self.transformMatrixList[0][-1], False)
+
+        # TODO: Have other arms react
+
+    def rotateArm3Y(self, deg):
+        # Center to origin
+        invMat, ret = self.transformMatrixList[0][-1].inverted()
+        self.basePlate.applyTransform(invMat, False)
+
+        # Rotate
+        self.basePlate.rotate(deg, 0, 0, 1)
+
+        # Bring back to original cords
+        self.basePlate.applyTransform(self.transformMatrixList[0][-1], False)
+
+        # TODO: Have other arms react
