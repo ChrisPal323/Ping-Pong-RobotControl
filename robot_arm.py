@@ -24,10 +24,16 @@ class RobotArm:
     xnet = 66
     ynet = 6  # Kinda like a z coord after 90 degree rotation
 
-    # In order of arm base to end joint
+    # TODO: Fix this array!
     # Will store all the transformations and rotations done on each object
     # this is for us to reference and revert and transformations done if needed
-    transformMatrixList = np.array([[]])
+    transformMatrixList = np.array([deque(maxlen=4),   # Base Plate
+                                    deque(maxlen=4),   # Side Support 1
+                                    deque(maxlen=4),   # Side Support 2
+                                    deque(maxlen=4),   # Arm 1
+                                    deque(maxlen=4),   # Arm 2
+                                    deque(maxlen=4),   # Arm 3
+                                    deque(maxlen=4)])  # Paddle
 
     def __init__(self, w):
         # Working Cube Faces for all parts
@@ -42,7 +48,7 @@ class RobotArm:
         basePlateLength = 12  # in inches
         baseDistFromTable = -10.5
         basePlateThickness = 0.5
-        baseColors = np.array([[0.5, 0.3, 0.2, 1] for i in range(12)])
+        baseColors = np.array([[0.4, 0.4, 0.4, 1] for i in range(12)])
 
         # all verts for shapes
         baseStandVerts = np.array([[basePlateLength, 0, 0],  # 0
@@ -62,10 +68,15 @@ class RobotArm:
         self.basePlate.translate(-(basePlateLength / 2), -(basePlateLength / 2), 0)
 
         # Align with robot
-        basePlateTransform = Transform3D().translate(baseDistFromTable - (basePlateLength / 2),
-                                                     (self.ytable / 2),
-                                                     0)
+        basePlateTransform = Transform3D()
+        basePlateTransform.translate(baseDistFromTable - (basePlateLength / 2),
+                                     (self.ytable / 2),
+                                     0)
+        # Custom method to transform and store transformations
         self.transformBase(basePlateTransform)
+        newTransform =
+
+        self.basePlate.applyTransform(newTransform, False)
 
         w.addItem(self.basePlate)
 
@@ -102,7 +113,7 @@ class RobotArm:
         arm1Length = 22  # in inches
         arm1Width = 1
         arm1Height = 11.57
-        arm1Colors = np.array([[1, 0, 1, 1] for i in range(12)])
+        arm1Colors = np.array([[0.5, 0.5, 0.5, 1] for i in range(12)])
 
         arm1Verts = np.array([[arm1Width, 0, 0],  # 0
                               [0, 0, 0],  # 1
@@ -127,7 +138,7 @@ class RobotArm:
         # --- Create Arm Two ---
         arm2Length = 22  # in inches
         arm2Width = 1
-        arm2Colors = np.array([[1, 1, 0, 1] for i in range(12)])
+        arm2Colors = np.array([[0.6, 0.6, 0.6, 1] for i in range(12)])
 
         arm2Verts = np.array([[arm2Width, 0, 0],  # 0
                               [0, 0, 0],  # 1
@@ -152,7 +163,7 @@ class RobotArm:
         # --- Create End Joint ---
         arm3Length = 3.25  # meant to be rotated and flapped
         arm3Width = 0.5
-        arm3Colors = np.array([[1, 0, 0.6, 1] for i in range(12)])
+        arm3Colors = np.array([[0.7, 0.7, 0.7, 1] for i in range(12)])
 
         arm3Verts = np.array([[arm3Width, 0, 0],  # 0
                               [0, 0, 0],  # 1
@@ -174,29 +185,53 @@ class RobotArm:
 
         w.addItem(arm3)
 
-        return baseStand1
+        # --- Create Paddle ---
+        paddleLength = 6.7  # meant to be rotated and flapped
+        paddleWidth = 5.9
+        paddleThickness = 0.25
+        paddleColors = np.array([[0.5, 0, 0, 1] for i in range(12)])
+
+        paddleVerts = np.array([[paddleLength, 0, 0],  # 0
+                                [0, 0, 0],  # 1
+                                [0, paddleWidth, 0],  # 2
+                                [0, 0, paddleThickness],  # 3
+                                [paddleLength, paddleWidth, 0],  # 4
+                                [paddleLength, paddleWidth, paddleThickness],  # 5
+                                [0, paddleWidth, paddleThickness],  # 6
+                                [paddleLength, 0, paddleThickness]])  # 7
+
+        # Create same stands
+        paddle = gl.GLMeshItem(vertexes=paddleVerts, faces=renderFaces, faceColors=paddleColors,
+                               drawEdges=True, edgeColor=(0, 0, 0, 1))
+
+        # Move stands to correct coord
+        paddle.translate(baseDistFromTable - (basePlateLength / 2) - (arm3Width / 2),
+                         (self.ytable / 2) - (arm3Width / 2),
+                         54 + 4)
+
+        w.addItem(paddle)
 
     # In goes a transformation mat
     # Effects all the other parts of the arm as well
     def transformBase(self, tr):
         # Apply and save transform
-        self.basePlate.applyTransform(tr, locale=True)
-        self.transformMatrixList[0] = tr
+        self.basePlate.applyTransform(tr, False)
+        #self.transformMatrixList[0].append(tr)
 
     # In goes a transformation mat
     def transformArm1(self, tr):
         # Apply and save transform
-        self.transformArm1.applyTransform(tr, locale=True)
-        self.transformMatrixList[1] = tr
+        self.transformArm1.applyTransform(tr, False)
+        self.transformMatrixList[1].append(tr)
 
     # In goes a transformation mat
     def transformArm2(self, tr):
         # Apply and save transform
-        self.transformArm2.applyTransform(tr, locale=False)
-        self.transformMatrixList[2] = tr
+        self.transformArm2.applyTransform(tr, False)
+        self.transformMatrixList[2].append(tr)
 
     # In goes a transformation mat
     def transformArm3(self, tr):
         # Apply and save transform
-        self.transformArm3.applyTransform(tr, locale=False)
-        self.transformMatrixList[3] = tr
+        self.transformArm3.applyTransform(tr, False)
+        self.transformMatrixList[3].append(tr)

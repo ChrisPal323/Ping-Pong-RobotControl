@@ -41,7 +41,7 @@ def main():
     # ---- Create Objects to be Moved / Plotted ----
 
     # Create arm
-    arm = robot_arm.RobotArm(w)
+    robot_arm.RobotArm(w)
 
     while True:
 
