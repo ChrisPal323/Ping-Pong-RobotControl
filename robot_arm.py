@@ -1,12 +1,11 @@
 import math
 import random
 import sys
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import cv2
 from collections import deque
-from scipy.linalg import qr, svd
 import pyqtgraph.opengl as gl
+from pyqtgraph import Transform3D
 from pyqtgraph.Qt import QtGui
 
 
@@ -59,10 +58,14 @@ class RobotArm:
         self.basePlate = gl.GLMeshItem(vertexes=baseStandVerts, faces=renderFaces, faceColors=baseColors,
                                        drawEdges=True, edgeColor=(0, 0, 0, 1))
 
-        # Move stands to correct coord
-        self.basePlate.translate(baseDistFromTable - basePlateLength,
-                                 (self.ytable / 2) - (basePlateLength / 2),
-                                 0)
+        # Center at origin
+        self.basePlate.translate(-(basePlateLength / 2), -(basePlateLength / 2), 0)
+
+        # Align with robot
+        basePlateTransform = Transform3D().translate(baseDistFromTable - (basePlateLength / 2),
+                                                     (self.ytable / 2),
+                                                     0)
+        self.transformBase(basePlateTransform)
 
         w.addItem(self.basePlate)
 
@@ -177,23 +180,23 @@ class RobotArm:
     # Effects all the other parts of the arm as well
     def transformBase(self, tr):
         # Apply and save transform
-        self.basePlate.applyTransform(tr)
+        self.basePlate.applyTransform(tr, locale=True)
         self.transformMatrixList[0] = tr
 
     # In goes a transformation mat
     def transformArm1(self, tr):
         # Apply and save transform
-        self.transformArm1.applyTransform(tr)
+        self.transformArm1.applyTransform(tr, locale=True)
         self.transformMatrixList[1] = tr
 
     # In goes a transformation mat
     def transformArm2(self, tr):
         # Apply and save transform
-        self.transformArm2.applyTransform(tr)
+        self.transformArm2.applyTransform(tr, locale=False)
         self.transformMatrixList[2] = tr
 
     # In goes a transformation mat
     def transformArm3(self, tr):
         # Apply and save transform
-        self.transformArm3.applyTransform(tr)
-        self.transformMatrixList[2] = tr
+        self.transformArm3.applyTransform(tr, locale=False)
+        self.transformMatrixList[3] = tr
