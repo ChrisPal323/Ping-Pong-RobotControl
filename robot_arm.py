@@ -14,7 +14,7 @@ class RobotArm:
     """
     Will be used to
     - create rendering of arm
-    - keep track of each joint rotation
+    - keep track of each joint transformations
     - Possibly inverse kinematics (maybe another class)
     """
 
@@ -28,7 +28,7 @@ class RobotArm:
     # In order of arm base to end joint
     # Will store all the transformations and rotations done on each object
     # this is for us to reference and revert and transformations done if needed
-    transformMatrixList = [[]]
+    transformMatrixList = np.array([[]])
 
     def __init__(self, w):
         # Working Cube Faces for all parts
@@ -56,15 +56,15 @@ class RobotArm:
                                    [basePlateLength, 0, -basePlateThickness]])  # 7
 
         # Create same stands
-        basePlate = gl.GLMeshItem(vertexes=baseStandVerts, faces=renderFaces, faceColors=baseColors,
-                                  drawEdges=True, edgeColor=(0, 0, 0, 1))
+        self.basePlate = gl.GLMeshItem(vertexes=baseStandVerts, faces=renderFaces, faceColors=baseColors,
+                                       drawEdges=True, edgeColor=(0, 0, 0, 1))
 
         # Move stands to correct coord
-        basePlate.translate(baseDistFromTable - basePlateLength,
-                            (self.ytable / 2) - (basePlateLength / 2),
-                            0)
+        self.basePlate.translate(baseDistFromTable - basePlateLength,
+                                 (self.ytable / 2) - (basePlateLength / 2),
+                                 0)
 
-        w.addItem(basePlate)
+        w.addItem(self.basePlate)
 
         # --- Create Base Stands ---
         heightBaseStand = 12.6
@@ -86,10 +86,10 @@ class RobotArm:
 
         # Translate stands
         baseStand1.translate(baseDistFromTable - (widthBaseStand / 2) - (basePlateLength / 2),
-                             (ytable / 2) + (basePlateLength / 2) - widthBaseStand,
+                             (self.ytable / 2) + (basePlateLength / 2) - widthBaseStand,
                              0)
         baseStand2.translate(baseDistFromTable - (widthBaseStand / 2) - (basePlateLength / 2),
-                             (ytable / 2) - (basePlateLength / 2), 0)
+                             (self.ytable / 2) - (basePlateLength / 2), 0)
 
         # Add to frame
         w.addItem(baseStand1)
@@ -116,7 +116,7 @@ class RobotArm:
 
         # Move stands to correct coord
         arm1.translate(baseDistFromTable - (basePlateLength / 2) - (arm1Width / 2),
-                       (ytable / 2) - (arm1Width / 2),
+                       (self.ytable / 2) - (arm1Width / 2),
                        arm1Height)
 
         w.addItem(arm1)
@@ -141,7 +141,7 @@ class RobotArm:
 
         # Move stands to correct coord
         arm2.translate(baseDistFromTable - (basePlateLength / 2) - (arm1Width / 2),
-                       (ytable / 2) - (arm1Width / 2),
+                       (self.ytable / 2) - (arm1Width / 2),
                        32.5)
 
         w.addItem(arm2)
@@ -166,9 +166,34 @@ class RobotArm:
 
         # Move stands to correct coord
         arm3.translate(baseDistFromTable - (basePlateLength / 2) - (arm3Width / 2),
-                       (ytable / 2) - (arm3Width / 2),
+                       (self.ytable / 2) - (arm3Width / 2),
                        54)
 
         w.addItem(arm3)
 
         return baseStand1
+
+    # In goes a transformation mat
+    # Effects all the other parts of the arm as well
+    def transformBase(self, tr):
+        # Apply and save transform
+        self.basePlate.applyTransform(tr)
+        self.transformMatrixList[0] = tr
+
+    # In goes a transformation mat
+    def transformArm1(self, tr):
+        # Apply and save transform
+        self.transformArm1.applyTransform(tr)
+        self.transformMatrixList[1] = tr
+
+    # In goes a transformation mat
+    def transformArm2(self, tr):
+        # Apply and save transform
+        self.transformArm2.applyTransform(tr)
+        self.transformMatrixList[2] = tr
+
+    # In goes a transformation mat
+    def transformArm3(self, tr):
+        # Apply and save transform
+        self.transformArm3.applyTransform(tr)
+        self.transformMatrixList[2] = tr

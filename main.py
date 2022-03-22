@@ -191,9 +191,6 @@ def main():
                          [0, 1, 0],
                          [0, 0, 1],
                          [0, 0, 0]]
-    arm.applyTransform(originTranslation, local=False)
-    arm.rotate(45, 0, 0, 1, )
-
 
     while True:
 
