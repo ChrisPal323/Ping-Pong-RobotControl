@@ -41,11 +41,14 @@ def main():
     # ---- Create Objects to be Moved / Plotted ----
 
     # Create arm
-    robot_arm.RobotArm(w)
+    arm = robot_arm.RobotArm(w)
+    arm.rotateBase(45)
+
+    # update arm
+    angle = 1
 
     while True:
-
-        # update arm
+        arm.rotateArm1(angle)
 
         # detect keys
         key = cv2.waitKey(1) & 0xFF

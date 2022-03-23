@@ -141,9 +141,6 @@ class RobotArm:
         self.transformArm1(arm1Transform)
         w.addItem(self.arm1)
 
-        self.rotateBase(34)
-        self.rotateArm1(34)
-
         # --- Create Arm Two ---
         arm2Length = 22  # in inches
         arm2Width = 1
@@ -264,12 +261,12 @@ class RobotArm:
         invMat, ret = self.transformMatrixList[1][-1].inverted()
         self.arm1.applyTransform(invMat, False)
 
-        if not zAxis:
+        if zAxis:
             # Rotate
-            self.arm1.rotate(deg, 0, 1, 0)
+            self.arm1.rotate(deg, 0, 0, 1)
         else:
-            # Rotate TODO: FIX!
-            self.arm1.rotate(-deg, 1, 0, 0)
+            # Rotate TODO: FIX
+            self.arm1.rotate(deg, 0, 1, 0)
 
         # Bring back to original cords
         self.arm1.applyTransform(self.transformMatrixList[1][-1], False)
@@ -294,7 +291,7 @@ class RobotArm:
             self.arm1.rotate(deg, 0, 1, 0)
         else:
             # Rotate
-            self.arm1.rotate(deg, 0, 0, 1)
+            self.arm1.rotate(deg, 1, 0, 0)
 
         # Bring back to original cords
         self.basePlate.applyTransform(self.transformMatrixList[0][-1], False)
