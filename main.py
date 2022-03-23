@@ -42,7 +42,7 @@ def main():
 
     # Create arm
     arm = robot_arm.RobotArm(w)
-    arm.rotateBase(45)
+    arm.rotateBase(25)
 
     while True:
 

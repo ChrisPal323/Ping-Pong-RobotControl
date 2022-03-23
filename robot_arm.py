@@ -269,14 +269,44 @@ class RobotArm:
             # Rotate
             self.arm1.rotate(deg, 0, 0, 1)
         else:
-            # Rotate
-            baseAngle = 45
+            # Rotate based on angle relaitive to roated base
+            baseAngle = 25
             xPortion = None
             yPortion = None
 
             if baseAngle <= 45:
-                xPortion = self.linearMap(baseAngle, 0, 45, 0, -0.5)
-                yPortion = self.linearMap(baseAngle, 0, 45, 1, 0.5)
+                # for angles 0-45 deg 'd', (X Values are) x = -0.11111111111d
+                # for angles 0-45 deg 'd', (Y Values are) y = -0.0111111111d + 1
+                xPortion = -0.011111111111*baseAngle
+                yPortion = -0.0111111111*baseAngle + 1
+
+            if baseAngle <= 45:
+                # for angles 0-45 deg 'd', (X Values are) x = -0.11111111111d
+                # for angles 0-45 deg 'd', (Y Values are) y = -0.0111111111d + 1
+                xPortion = -0.011111111111*baseAngle
+                yPortion = -0.0111111111*baseAngle + 1
+
+            if baseAngle <= 45:
+                # for angles 0-45 deg 'd', (X Values are) x = -0.11111111111d
+                # for angles 0-45 deg 'd', (Y Values are) y = -0.0111111111d + 1
+                xPortion = -0.011111111111*baseAngle
+                yPortion = -0.0111111111*baseAngle + 1
+
+            if baseAngle <= 45:
+                # for angles 0-45 deg 'd', (X Values are) x = -0.11111111111d
+                # for angles 0-45 deg 'd', (Y Values are) y = -0.0111111111d + 1
+                xPortion = -0.011111111111*baseAngle
+                yPortion = -0.0111111111*baseAngle + 1
+
+            """"
+            @45 : -0.5, 0.5, 0
+            @90 : 1, 0, 0
+            @135: 0.5, 0.5, 0
+            @180: 0, 1, 0
+            @225: 0.5, -0.5, 0
+            @270: 1, 0, 0
+            @360: 0, 1, 0
+            """
 
             self.arm1.rotate(deg, xPortion, yPortion, 0)
 
@@ -284,6 +314,35 @@ class RobotArm:
         self.arm1.applyTransform(self.transformMatrixList[1][-1], False)
 
         # TODO: Have other arms react
+
+    def calculateNewArm1RotAxis(self, baseAngle):
+        # Rotate based on angle relative to rotated base
+        xPortion = None
+        yPortion = None
+
+        if baseAngle <= 45:
+            # for angles 0-45 deg 'd', (X Values are) x = -0.11111111111d
+            # for angles 0-45 deg 'd', (Y Values are) y = -0.0111111111d + 1
+            xPortion = -0.011111111111 * baseAngle
+            yPortion = -0.0111111111 * baseAngle + 1
+
+        if baseAngle <= 90:
+            # for angles 0-45 deg 'd', (X Values are) x = -0.11111111111d
+            # for angles 0-45 deg 'd', (Y Values are) y = -0.0111111111d + 1
+            xPortion = 0.03333333333333333333 * baseAngle - 2
+            yPortion = -0.0111111111 * baseAngle + 1
+
+        if baseAngle <= 180:
+            # for angles 0-45 deg 'd', (X Values are) x = -0.11111111111d
+            # for angles 0-45 deg 'd', (Y Values are) y = -0.0111111111d + 1
+            xPortion = -0.011111111111 * baseAngle + 2
+            yPortion = 0.0111111111 * baseAngle - 1
+
+        if baseAngle <= 270:
+            # for angles 0-45 deg 'd', (X Values are) x = -0.11111111111d
+            # for angles 0-45 deg 'd', (Y Values are) y = -0.0111111111d + 1
+            xPortion = 0.011111111111 * baseAngle -2
+            yPortion = 0.0111111111 * baseAngle - 3
 
     # ------ Arm 2 Transforms--------
 
