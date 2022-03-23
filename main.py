@@ -44,11 +44,9 @@ def main():
     arm = robot_arm.RobotArm(w)
     arm.rotateBase(45)
 
-    # update arm
-    angle = 1
-
     while True:
-        arm.rotateArm1(angle)
+
+        arm.rotateArm1(5)
 
         # detect keys
         key = cv2.waitKey(1) & 0xFF

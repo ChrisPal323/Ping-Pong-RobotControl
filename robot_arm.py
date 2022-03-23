@@ -217,6 +217,10 @@ class RobotArm:
 
         w.addItem(paddle)
 
+    #  linear map function to map values to other values
+    def linearMap(self, x, in_min, in_max, out_min, out_max):
+        return int((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min)
+
     # ------ Base Transforms --------
 
     # In goes a transformation mat
@@ -265,8 +269,16 @@ class RobotArm:
             # Rotate
             self.arm1.rotate(deg, 0, 0, 1)
         else:
-            # Rotate TODO: FIX
-            self.arm1.rotate(deg, 0, 1, 0)
+            # Rotate
+            baseAngle = 45
+            xPortion = None
+            yPortion = None
+
+            if baseAngle <= 45:
+                xPortion = self.linearMap(baseAngle, 0, 45, 0, -0.5)
+                yPortion = self.linearMap(baseAngle, 0, 45, 1, 0.5)
+
+            self.arm1.rotate(deg, xPortion, yPortion, 0)
 
         # Bring back to original cords
         self.arm1.applyTransform(self.transformMatrixList[1][-1], False)
