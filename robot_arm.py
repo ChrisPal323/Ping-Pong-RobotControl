@@ -26,7 +26,6 @@ class RobotArm:
     xnet = 66
     ynet = 6  # Kinda like a z coord after 90 degree rotation
 
-    # TODO: Fix this array!
     # Will store all the transformations and rotations done on each object
     # this is for us to reference and revert and transformations done if needed
     transformMatrixList = np.array([deque(maxlen=4),  # Base Plate
@@ -34,6 +33,14 @@ class RobotArm:
                                     deque(maxlen=4),  # Arm 2
                                     deque(maxlen=4),  # Arm 3
                                     None])  # Paddle
+
+    # All joints and they angle bruh
+    currentJointAngles = [0,  # Base Plate
+                          0,  # Arm 1
+                          0,  # Arm 2
+                          0,  # Arm 3
+                          0]  # Paddle
+    baseAngle = 0
 
     def __init__(self, w):
         # Working Cube Faces for all parts
@@ -233,6 +240,10 @@ class RobotArm:
         self.transformMatrixList[0].append(tr)
 
     def rotateBase(self, deg):
+
+        # Record value
+        self.currentJointAngles[0] += deg
+
         # Center to origin
         invMat, ret = self.transformMatrixList[0][-1].inverted()
         self.basePlate.applyTransform(invMat, False)
@@ -250,7 +261,7 @@ class RobotArm:
         self.baseStand2.applyTransform(self.transformMatrixList[0][-1], False)
 
         # TODO: Have other arms react
-        self.rotateArm1(deg, zAxis=True)
+        self.rotateArm1(self.currentJointAngles[0], zAxis=True)
 
     # ------ Arm 1 Transforms --------
 
@@ -266,49 +277,16 @@ class RobotArm:
         self.arm1.applyTransform(invMat, False)
 
         if zAxis:
-            # Rotate
-            self.arm1.rotate(deg, 0, 0, 1)
+            # Rotate around z axis, so it stays in line with base
+            #self.arm1.rotate(self.currentJointAngles[0], 0, 0, 1)
+            pass
         else:
-            # Rotate based on angle relaitive to roated base
-            baseAngle = 25
-            xPortion = None
-            yPortion = None
-
-            if baseAngle <= 45:
-                # for angles 0-45 deg 'd', (X Values are) x = -0.11111111111d
-                # for angles 0-45 deg 'd', (Y Values are) y = -0.0111111111d + 1
-                xPortion = -0.011111111111*baseAngle
-                yPortion = -0.0111111111*baseAngle + 1
-
-            if baseAngle <= 45:
-                # for angles 0-45 deg 'd', (X Values are) x = -0.11111111111d
-                # for angles 0-45 deg 'd', (Y Values are) y = -0.0111111111d + 1
-                xPortion = -0.011111111111*baseAngle
-                yPortion = -0.0111111111*baseAngle + 1
-
-            if baseAngle <= 45:
-                # for angles 0-45 deg 'd', (X Values are) x = -0.11111111111d
-                # for angles 0-45 deg 'd', (Y Values are) y = -0.0111111111d + 1
-                xPortion = -0.011111111111*baseAngle
-                yPortion = -0.0111111111*baseAngle + 1
-
-            if baseAngle <= 45:
-                # for angles 0-45 deg 'd', (X Values are) x = -0.11111111111d
-                # for angles 0-45 deg 'd', (Y Values are) y = -0.0111111111d + 1
-                xPortion = -0.011111111111*baseAngle
-                yPortion = -0.0111111111*baseAngle + 1
-
-            """"
-            @45 : -0.5, 0.5, 0
-            @90 : 1, 0, 0
-            @135: 0.5, 0.5, 0
-            @180: 0, 1, 0
-            @225: 0.5, -0.5, 0
-            @270: 1, 0, 0
-            @360: 0, 1, 0
-            """
-
+            # Rotate based on angle relative to current rotated base
+            xPortion, yPortion = self.calculateNewArm1RotAxis(self.currentJointAngles[0])
             self.arm1.rotate(deg, xPortion, yPortion, 0)
+
+            # TODO: Fix how to revert and constantly update the rotation axis of arm1 as base changes!!!
+            #self.currentJointAngles[1] = (deg, xPortion, yPortion, 0)
 
         # Bring back to original cords
         self.arm1.applyTransform(self.transformMatrixList[1][-1], False)
@@ -317,8 +295,6 @@ class RobotArm:
 
     def calculateNewArm1RotAxis(self, baseAngle):
         # Rotate based on angle relative to rotated base
-        xPortion = None
-        yPortion = None
 
         if baseAngle <= 45:
             # for angles 0-45 deg 'd', (X Values are) x = -0.11111111111d
@@ -326,23 +302,25 @@ class RobotArm:
             xPortion = -0.011111111111 * baseAngle
             yPortion = -0.0111111111 * baseAngle + 1
 
+            return xPortion, yPortion
+
         if baseAngle <= 90:
-            # for angles 0-45 deg 'd', (X Values are) x = -0.11111111111d
-            # for angles 0-45 deg 'd', (Y Values are) y = -0.0111111111d + 1
             xPortion = 0.03333333333333333333 * baseAngle - 2
             yPortion = -0.0111111111 * baseAngle + 1
 
+            return xPortion, yPortion
+
         if baseAngle <= 180:
-            # for angles 0-45 deg 'd', (X Values are) x = -0.11111111111d
-            # for angles 0-45 deg 'd', (Y Values are) y = -0.0111111111d + 1
             xPortion = -0.011111111111 * baseAngle + 2
             yPortion = 0.0111111111 * baseAngle - 1
 
+            return xPortion, yPortion
+
         if baseAngle <= 270:
-            # for angles 0-45 deg 'd', (X Values are) x = -0.11111111111d
-            # for angles 0-45 deg 'd', (Y Values are) y = -0.0111111111d + 1
-            xPortion = 0.011111111111 * baseAngle -2
+            xPortion = 0.011111111111 * baseAngle - 2
             yPortion = 0.0111111111 * baseAngle - 3
+
+            return xPortion, yPortion
 
     # ------ Arm 2 Transforms--------
 
