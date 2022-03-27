@@ -26,21 +26,20 @@ class RobotArm:
     xnet = 66
     ynet = 6  # Kinda like a z coord after 90 degree rotation
 
-    # Will store all the transformations and rotations done on each object
+    # Will store all the initial transformations to get to the arm position
     # this is for us to reference and revert and transformations done if needed
-    transformMatrixList = np.array([deque(maxlen=4),  # Base Plate
-                                    deque(maxlen=4),  # Arm 1
-                                    deque(maxlen=4),  # Arm 2
-                                    deque(maxlen=4),  # Arm 3
-                                    None])  # Paddle
+    initTransformMatrixList = np.array([deque(maxlen=4),  # Base Plate
+                                        deque(maxlen=4),  # Arm 1
+                                        deque(maxlen=4),  # Arm 2
+                                        deque(maxlen=4),  # Arm 3
+                                        None])  # Paddle
 
-    # All joints and they angle bruh
-    currentJointAngles = [0,  # Base Plate
-                          0,  # Arm 1
-                          0,  # Arm 2
-                          0,  # Arm 3
-                          0]  # Paddle
-    baseAngle = 0
+    # All joints and they angle
+    currentJointAngles = [0,  # Base Plate (just a number)
+                          0,  # Arm 1  (x, y, z)
+                          0,  # Arm 2  (x, y, z)
+                          0,  # Arm 3  (x, y, z)
+                          0]  # Paddle (x, y, z)
 
     def __init__(self, w):
         # Working Cube Faces for all parts
@@ -237,7 +236,7 @@ class RobotArm:
         self.basePlate.applyTransform(tr, False)
         self.baseStand1.applyTransform(tr, False)
         self.baseStand2.applyTransform(tr, False)
-        self.transformMatrixList[0].append(tr)
+        self.initTransformMatrixList[0].append(tr)
 
     def rotateBase(self, deg):
 
@@ -245,7 +244,7 @@ class RobotArm:
         self.currentJointAngles[0] += deg
 
         # Center to origin
-        invMat, ret = self.transformMatrixList[0][-1].inverted()
+        invMat, ret = self.initTransformMatrixList[0][-1].inverted()
         self.basePlate.applyTransform(invMat, False)
         self.baseStand1.applyTransform(invMat, False)
         self.baseStand2.applyTransform(invMat, False)
@@ -256,12 +255,14 @@ class RobotArm:
         self.baseStand2.rotate(deg, 0, 0, 1)
 
         # Bring back to original cords
-        self.basePlate.applyTransform(self.transformMatrixList[0][-1], False)
-        self.baseStand1.applyTransform(self.transformMatrixList[0][-1], False)
-        self.baseStand2.applyTransform(self.transformMatrixList[0][-1], False)
+        self.basePlate.applyTransform(self.initTransformMatrixList[0][-1], False)
+        self.baseStand1.applyTransform(self.initTransformMatrixList[0][-1], False)
+        self.baseStand2.applyTransform(self.initTransformMatrixList[0][-1], False)
 
         # TODO: Have other arms react
-        self.rotateArm1(self.currentJointAngles[0], zAxis=True)
+
+        # Just to update arm, just uses change in base angle
+        self.updateArm1(deg)
 
     # ------ Arm 1 Transforms --------
 
@@ -269,36 +270,55 @@ class RobotArm:
     def transformArm1(self, tr):
         # Apply and save transform
         self.arm1.applyTransform(tr, False)
-        self.transformMatrixList[1].append(tr)
+        self.initTransformMatrixList[1].append(tr)
 
-    def rotateArm1(self, deg, zAxis=False):
+    def rotateArm1(self, armDeg):
+
         # Center to origin
-        invMat, ret = self.transformMatrixList[1][-1].inverted()
+        invMat, ret = self.initTransformMatrixList[1][-1].inverted()
         self.arm1.applyTransform(invMat, False)
 
-        if zAxis:
-            # Rotate around z axis, so it stays in line with base
-            #self.arm1.rotate(self.currentJointAngles[0], 0, 0, 1)
-            pass
-        else:
-            # Rotate based on angle relative to current rotated base
-            xPortion, yPortion = self.calculateNewArm1RotAxis(self.currentJointAngles[0])
-            self.arm1.rotate(deg, xPortion, yPortion, 0)
+        # Record angle
+        self.currentJointAngles[1] += armDeg
 
-            # TODO: Fix how to revert and constantly update the rotation axis of arm1 as base changes!!!
-            #self.currentJointAngles[1] = (deg, xPortion, yPortion, 0)
+        # Rotate based on angle relative to current rotated base
+        xPortion, yPortion = self.calculateNewArm1RotAxis(self.currentJointAngles[0])
+        self.arm1.rotate(armDeg, xPortion, yPortion, 0)
 
         # Bring back to original cords
-        self.arm1.applyTransform(self.transformMatrixList[1][-1], False)
+        self.arm1.applyTransform(self.initTransformMatrixList[1][-1], False)
+
+    def updateArm1(self, changeInBaseDeg):
+
+        # Center to origin
+        invMat, ret = self.initTransformMatrixList[1][-1].inverted()
+        self.arm1.applyTransform(invMat, False)
+
+        self.arm1.rotate(changeInBaseDeg, 0, 0, 1)
+
+        # Bring back to original cords
+        self.arm1.applyTransform(self.initTransformMatrixList[1][-1], False)
 
         # TODO: Have other arms react
 
     def calculateNewArm1RotAxis(self, baseAngle):
-        # Rotate based on angle relative to rotated base
+        """"
+        Rotate based on angle relative to rotated base Bellow is the x, y, z portion sizes (1 is inline with that
+        axis and 0 does not include that axis in the rotation) of rotation for each of the base angles I'm actively
+        looking for a better way to do this, but this works for now
+
+        @45 : -0.5, 0.5, 0
+        @90 : 1, 0, 0
+        @135: 0.5, 0.5, 0
+        @180: 0, 1, 0
+        @225: 0.5, -0.5, 0
+        @270: 1, 0, 0
+        @360: 0, 1, 0
+        """
 
         if baseAngle <= 45:
-            # for angles 0-45 deg 'd', (X Values are) x = -0.11111111111d
-            # for angles 0-45 deg 'd', (Y Values are) y = -0.0111111111d + 1
+            # for angles 0-45 deg 'd', (X portion values are) x = -0.11111111111d
+            # for angles 0-45 deg 'd', (Y portion values are) y = -0.0111111111d + 1
             xPortion = -0.011111111111 * baseAngle
             yPortion = -0.0111111111 * baseAngle + 1
 
@@ -328,11 +348,11 @@ class RobotArm:
     def transformArm2(self, tr):
         # Apply and save transform
         self.transformArm2.applyTransform(tr, False)
-        self.transformMatrixList[2].append(tr)
+        self.initTransformMatrixList[2].append(tr)
 
     def rotateArm3(self, deg, zAxis=False):
         # Center to origin
-        invMat, ret = self.transformMatrixList[0][-1].inverted()
+        invMat, ret = self.initTransformMatrixList[0][-1].inverted()
         self.basePlate.applyTransform(invMat, False)
 
         if not zAxis:
@@ -343,7 +363,7 @@ class RobotArm:
             self.arm1.rotate(deg, 1, 0, 0)
 
         # Bring back to original cords
-        self.basePlate.applyTransform(self.transformMatrixList[0][-1], False)
+        self.basePlate.applyTransform(self.initTransformMatrixList[0][-1], False)
 
         # TODO: Have other arms react
 
@@ -353,30 +373,30 @@ class RobotArm:
     def transformArm3(self, tr):
         # Apply and save transform
         self.transformArm3.applyTransform(tr, False)
-        self.transformMatrixList[3].append(tr)
+        self.initTransformMatrixList[3].append(tr)
 
     def rotateArm3X(self, deg):
         # Center to origin
-        invMat, ret = self.transformMatrixList[0][-1].inverted()
+        invMat, ret = self.initTransformMatrixList[0][-1].inverted()
         self.basePlate.applyTransform(invMat, False)
 
         # Rotate
         self.basePlate.rotate(deg, 0, 0, 1)
 
         # Bring back to original cords
-        self.basePlate.applyTransform(self.transformMatrixList[0][-1], False)
+        self.basePlate.applyTransform(self.initTransformMatrixList[0][-1], False)
 
         # TODO: Have other arms react
 
     def rotateArm3Y(self, deg):
         # Center to origin
-        invMat, ret = self.transformMatrixList[0][-1].inverted()
+        invMat, ret = self.initTransformMatrixList[0][-1].inverted()
         self.basePlate.applyTransform(invMat, False)
 
         # Rotate
         self.basePlate.rotate(deg, 0, 0, 1)
 
         # Bring back to original cords
-        self.basePlate.applyTransform(self.transformMatrixList[0][-1], False)
+        self.basePlate.applyTransform(self.initTransformMatrixList[0][-1], False)
 
         # TODO: Have other arms react
