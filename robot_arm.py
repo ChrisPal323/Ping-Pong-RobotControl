@@ -51,47 +51,47 @@ class RobotArm:
                                 [3, 6, 5], [3, 7, 5]])
 
         # --- Create Arm Base ---
-        basePlateLength = 12  # in inches
-        baseDistFromTable = -10.5
-        basePlateThickness = 0.5
+        self.basePlateLength = 12  # in inches
+        self.baseDistFromTable = -10.5
+        self.basePlateThickness = 0.5
         baseColors = np.array([[0.4, 0.4, 0.4, 1] for i in range(12)])
 
         # all verts for shapes
-        baseStandVerts = np.array([[basePlateLength, 0, 0],  # 0
+        baseStandVerts = np.array([[self.basePlateLength, 0, 0],  # 0
                                    [0, 0, 0],  # 1
-                                   [0, basePlateLength, 0],  # 2
-                                   [0, 0, -basePlateThickness],  # 3
-                                   [basePlateLength, basePlateLength, 0],  # 4
-                                   [basePlateLength, basePlateLength, -basePlateThickness],  # 5
-                                   [0, basePlateLength, -basePlateThickness],  # 6
-                                   [basePlateLength, 0, -basePlateThickness]])  # 7
+                                   [0, self.basePlateLength, 0],  # 2
+                                   [0, 0, -self.basePlateThickness],  # 3
+                                   [self.basePlateLength, self.basePlateLength, 0],  # 4
+                                   [self.basePlateLength, self.basePlateLength, -self.basePlateThickness],  # 5
+                                   [0, self.basePlateLength, -self.basePlateThickness],  # 6
+                                   [self.basePlateLength, 0, -self.basePlateThickness]])  # 7
 
         # Create same stands
         self.basePlate = gl.GLMeshItem(vertexes=baseStandVerts, faces=renderFaces, faceColors=baseColors,
                                        drawEdges=True, edgeColor=(0, 0, 0, 1))
 
         # Center at origin
-        self.basePlate.translate(-(basePlateLength / 2), -(basePlateLength / 2), 0)
+        self.basePlate.translate(-(self.basePlateLength / 2), -(self.basePlateLength / 2), 0)
 
         # Align with robot
         baseTransform = Transform3D()
-        baseTransform.translate(baseDistFromTable - (basePlateLength / 2),
+        baseTransform.translate(self.baseDistFromTable - (self.basePlateLength / 2),
                                 (self.ytable / 2),
                                 0)
         # Transform to align with robot when other sides are done
         w.addItem(self.basePlate)
 
         # --- Create Base Stands ---
-        heightBaseStand = 12.6
-        widthBaseStand = 3.5
-        baseStandVerts = np.array([[widthBaseStand, 0, 0],  # 0
+        self.heightBaseStand = 12.6
+        self.widthBaseStand = 3.5
+        baseStandVerts = np.array([[self.widthBaseStand, 0, 0],  # 0
                                    [0, 0, 0],  # 1
-                                   [0, widthBaseStand, 0],  # 2
-                                   [0, 0, heightBaseStand],  # 3
-                                   [widthBaseStand, widthBaseStand, 0],  # 4
-                                   [widthBaseStand, widthBaseStand, heightBaseStand],  # 5
-                                   [0, widthBaseStand, heightBaseStand],  # 6
-                                   [widthBaseStand, 0, heightBaseStand]])  # 7
+                                   [0, self.widthBaseStand, 0],  # 2
+                                   [0, 0, self.heightBaseStand],  # 3
+                                   [self.widthBaseStand, self.widthBaseStand, 0],  # 4
+                                   [self.widthBaseStand, self.widthBaseStand, self.heightBaseStand],  # 5
+                                   [0, self.widthBaseStand, self.heightBaseStand],  # 6
+                                   [self.widthBaseStand, 0, self.heightBaseStand]])  # 7
 
         # Create same stands
         self.baseStand1 = gl.GLMeshItem(vertexes=baseStandVerts, faces=renderFaces, faceColors=baseColors,
@@ -100,12 +100,12 @@ class RobotArm:
                                         drawEdges=True, edgeColor=(0, 0, 0, 1))
 
         # Translate stands to ORIGIN
-        self.baseStand1.translate(-widthBaseStand / 2,
-                                  (basePlateLength / 2) - widthBaseStand,
+        self.baseStand1.translate(-self.widthBaseStand / 2,
+                                  (self.basePlateLength / 2) - self.widthBaseStand,
                                   0)
 
-        self.baseStand2.translate(-widthBaseStand / 2,
-                                  -(basePlateLength / 2),
+        self.baseStand2.translate(-self.widthBaseStand / 2,
+                                  -(self.basePlateLength / 2),
                                   0)
 
         # Custom method to transform and store transformations
@@ -116,86 +116,93 @@ class RobotArm:
         w.addItem(self.baseStand2)
 
         # --- Create Arm One ---
-        arm1Length = 22  # in inches
-        arm1Width = 1
-        arm1Height = 11.57
+        self.arm1Length = 21  # in inches
+        self.arm1Width = 1
+        self.arm1Height = 11.57
         arm1Colors = np.array([[0.5, 0.5, 0.5, 1] for i in range(12)])
 
-        arm1Verts = np.array([[arm1Width, 0, 0],  # 0
+        arm1Verts = np.array([[self.arm1Width, 0, 0],  # 0
                               [0, 0, 0],  # 1
-                              [0, arm1Width, 0],  # 2
-                              [0, 0, arm1Length],  # 3
-                              [arm1Width, arm1Width, 0],  # 4
-                              [arm1Width, arm1Width, arm1Length],  # 5
-                              [0, arm1Width, arm1Length],  # 6
-                              [arm1Width, 0, arm1Length]])  # 7
+                              [0, self.arm1Width, 0],  # 2
+                              [0, 0, self.arm1Length],  # 3
+                              [self.arm1Width, self.arm1Width, 0],  # 4
+                              [self.arm1Width, self.arm1Width, self.arm1Length],  # 5
+                              [0, self.arm1Width, self.arm1Length],  # 6
+                              [self.arm1Width, 0, self.arm1Length]])  # 7
 
         # Create same stands
         self.arm1 = gl.GLMeshItem(vertexes=arm1Verts, faces=renderFaces, faceColors=arm1Colors,
                                   drawEdges=True, edgeColor=(0, 0, 0, 1))
 
         # Move stands to ORIGIN
-        self.arm1.translate(-(arm1Width / 2),
-                            -(arm1Width / 2),
+        self.arm1.translate(-(self.arm1Width / 2),
+                            -(self.arm1Width / 2),
                             0)
 
         # Align with robot
         arm1Transform = Transform3D()
-        arm1Transform.translate(baseDistFromTable - (basePlateLength / 2),
+        arm1Transform.translate(self.baseDistFromTable - (self.basePlateLength / 2),
                                 (self.ytable / 2),
-                                arm1Height)
+                                self.arm1Height)
         self.transformArm1(arm1Transform)
         w.addItem(self.arm1)
 
         # --- Create Arm Two ---
-        arm2Length = 22  # in inches
-        arm2Width = 1
+        self.arm2Length = 21  # in inches
+        self.arm2Width = 1
+        self.arm2Height = 32.5
         arm2Colors = np.array([[0.6, 0.6, 0.6, 1] for i in range(12)])
 
-        arm2Verts = np.array([[arm2Width, 0, 0],  # 0
+        arm2Verts = np.array([[self.arm2Width, 0, 0],  # 0
                               [0, 0, 0],  # 1
-                              [0, arm2Width, 0],  # 2
-                              [0, 0, arm2Length],  # 3
-                              [arm2Width, arm2Width, 0],  # 4
-                              [arm2Width, arm2Width, arm2Length],  # 5
-                              [0, arm2Width, arm2Length],  # 6
-                              [arm2Width, 0, arm2Length]])  # 7
+                              [0, self.arm2Width, 0],  # 2
+                              [0, 0, self.arm2Length],  # 3
+                              [self.arm2Width, self.arm2Width, 0],  # 4
+                              [self.arm2Width, self.arm2Width, self.arm2Length],  # 5
+                              [0, self.arm2Width, self.arm2Length],  # 6
+                              [self.arm2Width, 0, self.arm2Length]])  # 7
 
-        # Create same stands
-        arm2 = gl.GLMeshItem(vertexes=arm2Verts, faces=renderFaces, faceColors=arm2Colors,
-                             drawEdges=True, edgeColor=(0, 0, 0, 1))
+        # Create arm 2
+        self.arm2 = gl.GLMeshItem(vertexes=arm2Verts, faces=renderFaces, faceColors=arm2Colors,
+                                  drawEdges=True, edgeColor=(0, 0, 0, 1))
 
-        # Move stands to correct coord
-        arm2.translate(baseDistFromTable - (basePlateLength / 2) - (arm1Width / 2),
-                       (self.ytable / 2) - (arm1Width / 2),
-                       32.5)
+        # Move arm to ORIGIN
+        self.arm2.translate(-(self.arm2Width / 2),
+                            -(self.arm2Width / 2),
+                            0)
 
-        w.addItem(arm2)
+        # Align with robot
+        arm2Transform = Transform3D()
+        arm2Transform.translate(self.baseDistFromTable - (self.basePlateLength / 2),
+                                (self.ytable / 2),
+                                self.arm2Height)
+        self.transformArm2(arm2Transform)
+        w.addItem(self.arm2)
 
         # --- Create End Joint ---
-        arm3Length = 3.25  # meant to be rotated and flapped
-        arm3Width = 0.5
+        self.arm3Length = 3.25  # meant to be rotated and flapped
+        self.arm3Width = 0.5
         arm3Colors = np.array([[0.7, 0.7, 0.7, 1] for i in range(12)])
 
-        arm3Verts = np.array([[arm3Width, 0, 0],  # 0
+        arm3Verts = np.array([[self.arm3Width, 0, 0],  # 0
                               [0, 0, 0],  # 1
-                              [0, arm3Width, 0],  # 2
-                              [0, 0, arm3Length],  # 3
-                              [arm3Width, arm3Width, 0],  # 4
-                              [arm3Width, arm3Width, arm3Length],  # 5
-                              [0, arm3Width, arm3Length],  # 6
-                              [arm3Width, 0, arm3Length]])  # 7
+                              [0, self.arm3Width, 0],  # 2
+                              [0, 0, self.arm3Length],  # 3
+                              [self.arm3Width, self.arm3Width, 0],  # 4
+                              [self.arm3Width, self.arm3Width, self.arm3Length],  # 5
+                              [0, self.arm3Width, self.arm3Length],  # 6
+                              [self.arm3Width, 0, self.arm3Length]])  # 7
 
         # Create same stands
-        arm3 = gl.GLMeshItem(vertexes=arm3Verts, faces=renderFaces, faceColors=arm3Colors,
-                             drawEdges=True, edgeColor=(0, 0, 0, 1))
+        self.arm3 = gl.GLMeshItem(vertexes=arm3Verts, faces=renderFaces, faceColors=arm3Colors,
+                                  drawEdges=True, edgeColor=(0, 0, 0, 1))
 
         # Move stands to correct coord
-        arm3.translate(baseDistFromTable - (basePlateLength / 2) - (arm3Width / 2),
-                       (self.ytable / 2) - (arm3Width / 2),
-                       54)
+        self.arm3.translate(self.baseDistFromTable - (self.basePlateLength / 2) - (self.arm3Width / 2),
+                            (self.ytable / 2) - (self.arm3Width / 2),
+                            54)
 
-        w.addItem(arm3)
+        w.addItem(self.arm3)
 
         # --- Create Paddle ---
         paddleLength = 6.7  # meant to be rotated and flapped
@@ -217,15 +224,11 @@ class RobotArm:
                                drawEdges=True, edgeColor=(0, 0, 0, 1))
 
         # Move stands to correct coord
-        paddle.translate(baseDistFromTable - (basePlateLength / 2) - (arm3Width / 2),
-                         (self.ytable / 2) - (arm3Width / 2),
+        paddle.translate(self.baseDistFromTable - (self.basePlateLength / 2) - (self.arm3Width / 2),
+                         (self.ytable / 2) - (self.arm3Width / 2),
                          54 + 4)
 
         w.addItem(paddle)
-
-    #  linear map function to map values to other values
-    def linearMap(self, x, in_min, in_max, out_min, out_max):
-        return int((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min)
 
     # ------ Base Transforms --------
 
@@ -239,15 +242,23 @@ class RobotArm:
         self.initTransformMatrixList[0].append(tr)
 
     def rotateBase(self, deg):
+        self.basePlate.resetTransform()
+        self.baseStand1.resetTransform()
+        self.baseStand2.resetTransform()
 
-        # Record value
-        self.currentJointAngles[0] += deg
+        # Center at origin
+        self.basePlate.translate(-(self.basePlateLength / 2),
+                                 -(self.basePlateLength / 2),
+                                 0)
+        self.baseStand1.translate(-self.widthBaseStand / 2,
+                                  (self.basePlateLength / 2) - self.widthBaseStand,
+                                  0)
+        self.baseStand2.translate(-self.widthBaseStand / 2,
+                                  -(self.basePlateLength / 2),
+                                  0)
 
-        # Center to origin
-        invMat, ret = self.initTransformMatrixList[0][-1].inverted()
-        self.basePlate.applyTransform(invMat, False)
-        self.baseStand1.applyTransform(invMat, False)
-        self.baseStand2.applyTransform(invMat, False)
+        # Record angle
+        self.currentJointAngles[0] = deg
 
         # Rotate
         self.basePlate.rotate(deg, 0, 0, 1)
@@ -262,7 +273,9 @@ class RobotArm:
         # TODO: Have other arms react
 
         # Just to update arm, just uses change in base angle
-        self.updateArm1(deg)
+        self.updateArm1()
+        self.updateArm2()
+        # self.updateArm3()
 
     # ------ Arm 1 Transforms --------
 
@@ -273,99 +286,80 @@ class RobotArm:
         self.initTransformMatrixList[1].append(tr)
 
     def rotateArm1(self, armDeg):
-
-        # Center to origin
-        invMat, ret = self.initTransformMatrixList[1][-1].inverted()
-        self.arm1.applyTransform(invMat, False)
+        self.arm1.resetTransform()
+        # Move arm to ORIGIN
+        self.arm1.translate(-(self.arm1Width / 2),
+                            -(self.arm1Width / 2),
+                            0)
 
         # Record angle
-        self.currentJointAngles[1] += armDeg
+        self.currentJointAngles[1] = armDeg
 
-        # Rotate based on angle relative to current rotated base
-        xPortion, yPortion = self.calculateNewArm1RotAxis(self.currentJointAngles[0])
-        self.arm1.rotate(armDeg, xPortion, yPortion, 0)
-
-        # Bring back to original cords
-        self.arm1.applyTransform(self.initTransformMatrixList[1][-1], False)
-
-    def updateArm1(self, changeInBaseDeg):
-
-        # Center to origin
-        invMat, ret = self.initTransformMatrixList[1][-1].inverted()
-        self.arm1.applyTransform(invMat, False)
-
-        self.arm1.rotate(changeInBaseDeg, 0, 0, 1)
+        # rotate and tilt to base stand
+        self.arm1.rotate(armDeg, 0, 1, 0)
+        self.arm1.rotate(self.currentJointAngles[0], 0, 0, 1)
 
         # Bring back to original cords
         self.arm1.applyTransform(self.initTransformMatrixList[1][-1], False)
 
-        # TODO: Have other arms react
+        # Update other arms
+        self.updateArm2()
+        #self.updateArm3()
 
-    def calculateNewArm1RotAxis(self, baseAngle):
-        """"
-        Rotate based on angle relative to rotated base Bellow is the x, y, z portion sizes (1 is inline with that
-        axis and 0 does not include that axis in the rotation) of rotation for each of the base angles I'm actively
-        looking for a better way to do this, but this works for now
+    def updateArm1(self):
+        self.arm1.resetTransform()
+        # Move arm to ORIGIN
+        self.arm1.translate(-(self.arm1Width / 2),
+                            -(self.arm1Width / 2),
+                            0)
 
-        @45 : -0.5, 0.5, 0
-        @90 : 1, 0, 0
-        @135: 0.5, 0.5, 0
-        @180: 0, 1, 0
-        @225: 0.5, -0.5, 0
-        @270: 1, 0, 0
-        @360: 0, 1, 0
-        """
+        # Rotate based on new base position
+        self.arm1.rotate(self.currentJointAngles[0], 0, 0, 1)
 
-        if baseAngle <= 45:
-            # for angles 0-45 deg 'd', (X portion values are) x = -0.11111111111d
-            # for angles 0-45 deg 'd', (Y portion values are) y = -0.0111111111d + 1
-            xPortion = -0.011111111111 * baseAngle
-            yPortion = -0.0111111111 * baseAngle + 1
-
-            return xPortion, yPortion
-
-        if baseAngle <= 90:
-            xPortion = 0.03333333333333333333 * baseAngle - 2
-            yPortion = -0.0111111111 * baseAngle + 1
-
-            return xPortion, yPortion
-
-        if baseAngle <= 180:
-            xPortion = -0.011111111111 * baseAngle + 2
-            yPortion = 0.0111111111 * baseAngle - 1
-
-            return xPortion, yPortion
-
-        if baseAngle <= 270:
-            xPortion = 0.011111111111 * baseAngle - 2
-            yPortion = 0.0111111111 * baseAngle - 3
-
-            return xPortion, yPortion
+        # Bring back to original cords
+        self.arm1.applyTransform(self.initTransformMatrixList[1][-1], False)
 
     # ------ Arm 2 Transforms--------
 
     # In goes a transformation mat
     def transformArm2(self, tr):
         # Apply and save transform
-        self.transformArm2.applyTransform(tr, False)
+        self.arm2.applyTransform(tr, False)
         self.initTransformMatrixList[2].append(tr)
 
-    def rotateArm3(self, deg, zAxis=False):
-        # Center to origin
-        invMat, ret = self.initTransformMatrixList[0][-1].inverted()
-        self.basePlate.applyTransform(invMat, False)
+    def rotateArm2(self, deg):
+        self.arm2.resetTransform()
+        # Move arm to ORIGIN
+        self.arm2.translate(-(self.arm2Width / 2),
+                            -(self.arm2Width / 2),
+                            0)
 
-        if not zAxis:
-            # Rotate
-            self.arm1.rotate(deg, 0, 1, 0)
-        else:
-            # Rotate
-            self.arm1.rotate(deg, 1, 0, 0)
+        # rotate and tilt to base stand
+        self.arm1.rotate(deg, 0, 1, 0)
+        self.arm1.rotate(self.currentJointAngles[0], 0, 0, 1)
 
         # Bring back to original cords
         self.basePlate.applyTransform(self.initTransformMatrixList[0][-1], False)
 
         # TODO: Have other arms react
+
+    def updateArm2(self):
+        self.arm2.resetTransform()
+        # Move arm to ORIGIN
+        self.arm2.translate(-(self.arm2Width / 2),
+                            -(self.arm2Width / 2),
+                            0)
+
+        # Translations due to arm1 moving
+        distFromCenter = self.arm1Length * math.sin(self.currentJointAngles[1] * math.pi / 180)
+        changeInHeight = self.arm1Length * math.cos(self.currentJointAngles[1] * math.pi / 180) - self.arm1Length
+        self.arm2.translate(distFromCenter, 0, changeInHeight)
+
+        # Rotate based on new base position
+        self.arm2.rotate(self.currentJointAngles[0], 0, 0, 1)
+
+        # Bring back to original cords
+        self.arm2.applyTransform(self.initTransformMatrixList[2][-1], False)
 
     # ------ Arm 3 Transforms--------
 

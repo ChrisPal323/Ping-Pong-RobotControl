@@ -43,11 +43,14 @@ def main():
     # Create arm
     arm = robot_arm.RobotArm(w)
 
+    deg1 = 0
+    deg2 = 0
 
     while True:
-
-        arm.rotateArm1(0.01)
-        arm.rotateBase(0.01)
+        arm.rotateBase(deg1)
+        arm.rotateArm1(deg2)
+        deg1 += 1
+        deg2 += 2
 
         # detect keys
         key = cv2.waitKey(1) & 0xFF
