@@ -32,7 +32,8 @@ class RobotArm:
                                         deque(maxlen=4),  # Arm 1
                                         deque(maxlen=4),  # Arm 2
                                         deque(maxlen=4),  # Arm 3
-                                        None])  # Paddle
+                                        deque(maxlen=4),  # Paddle
+                                        None])
 
     # All joints and they angle
     currentJointAngles = [0,  # Base Plate (just a number)
@@ -78,7 +79,8 @@ class RobotArm:
         baseTransform.translate(self.baseDistFromTable - (self.basePlateLength / 2),
                                 (self.ytable / 2),
                                 0)
-        # Transform to align with robot when other sides are done
+
+        # Add to Frame
         w.addItem(self.basePlate)
 
         # --- Create Base Stands ---
@@ -111,7 +113,7 @@ class RobotArm:
         # Custom method to transform and store transformations
         self.transformBase(baseTransform)
 
-        # Add to frame
+        # Add to Frame
         w.addItem(self.baseStand1)
         w.addItem(self.baseStand2)
 
@@ -145,6 +147,8 @@ class RobotArm:
                                 (self.ytable / 2),
                                 self.arm1Height)
         self.transformArm1(arm1Transform)
+
+        # Add to Frame
         w.addItem(self.arm1)
 
         # --- Create Arm Two ---
@@ -177,6 +181,8 @@ class RobotArm:
                                 (self.ytable / 2),
                                 self.arm2Height)
         self.transformArm2(arm2Transform)
+
+        # Add to Frame
         w.addItem(self.arm2)
 
         # --- Create End Joint ---
@@ -210,33 +216,43 @@ class RobotArm:
                                 self.arm3Height)
         self.transformArm3(arm3Transform)
 
+        # Add to Frame
         w.addItem(self.arm3)
 
         # --- Create Paddle ---
-        paddleLength = 6.7  # meant to be rotated and flapped
-        paddleWidth = 5.9
-        paddleThickness = 0.25
-        paddleColors = np.array([[0.5, 0, 0, 1] for i in range(12)])
+        self.paddleLength = 8.75  # meant to be rotated and flapped
+        self.paddleWidth = 6
+        self.paddleHeight = 56.75
+        self.paddleThickness = 0.25
+        self.paddleColors = np.array([[0.5, 0, 0, 1] for i in range(12)])
 
-        paddleVerts = np.array([[paddleLength, 0, 0],  # 0
+        paddleVerts = np.array([[self.paddleLength, 0, 0],  # 0
                                 [0, 0, 0],  # 1
-                                [0, paddleWidth, 0],  # 2
-                                [0, 0, paddleThickness],  # 3
-                                [paddleLength, paddleWidth, 0],  # 4
-                                [paddleLength, paddleWidth, paddleThickness],  # 5
-                                [0, paddleWidth, paddleThickness],  # 6
-                                [paddleLength, 0, paddleThickness]])  # 7
+                                [0, self.paddleWidth, 0],  # 2
+                                [0, 0, self.paddleThickness],  # 3
+                                [self.paddleLength, self.paddleWidth, 0],  # 4
+                                [self.paddleLength, self.paddleWidth, self.paddleThickness],  # 5
+                                [0, self.paddleWidth, self.paddleThickness],  # 6
+                                [self.paddleLength, 0, self.paddleThickness]])  # 7
 
         # Create same stands
-        paddle = gl.GLMeshItem(vertexes=paddleVerts, faces=renderFaces, faceColors=paddleColors,
-                               drawEdges=True, edgeColor=(0, 0, 0, 1))
+        self.paddle = gl.GLMeshItem(vertexes=paddleVerts, faces=renderFaces, faceColors=self.paddleColors,
+                                    drawEdges=True, edgeColor=(0, 0, 0, 1))
 
-        # Move stands to correct coord
-        paddle.translate(self.baseDistFromTable - (self.basePlateLength / 2) - (self.arm3Width / 2),
-                         (self.ytable / 2) - (self.arm3Width / 2),
-                         54 + 4)
+        # Move arm to ORIGIN
+        self.paddle.translate(0,
+                              -(self.paddleWidth / 2),
+                              0)
 
-        w.addItem(paddle)
+        # Align with robot
+        paddleTransform = Transform3D()
+        paddleTransform.translate(self.baseDistFromTable - (self.basePlateLength / 2),
+                                  (self.ytable / 2),
+                                  self.paddleHeight)
+        self.transformPaddle(paddleTransform)
+
+        # Add to Frame
+        w.addItem(self.paddle)
 
     # ------ Base Transforms --------
 
@@ -278,12 +294,11 @@ class RobotArm:
         self.baseStand1.applyTransform(self.initTransformMatrixList[0][-1], False)
         self.baseStand2.applyTransform(self.initTransformMatrixList[0][-1], False)
 
-        # TODO: Have other arms react
-
         # Just to update arm, just uses change in base angle
         self.updateArm1()
         self.updateArm2()
-        # self.updateArm3()
+        self.updateArm3()
+        self.updatePaddle()
 
     # ------ Arm 1 Transforms --------
 
@@ -313,6 +328,7 @@ class RobotArm:
         # Update other arms
         self.updateArm2()
         self.updateArm3()
+        self.updatePaddle()
 
     def updateArm1(self):
         self.rotateArm1(self.currentJointAngles[1])
@@ -326,7 +342,6 @@ class RobotArm:
         self.initTransformMatrixList[2].append(tr)
 
     def rotateArm2(self, deg):
-
         self.arm2.resetTransform()
         # Move arm to ORIGIN
         self.arm2.translate(-(self.arm2Width / 2),
@@ -353,6 +368,7 @@ class RobotArm:
 
         # Have other arms react
         self.updateArm3()
+        self.updatePaddle()
 
     def updateArm2(self):
         self.rotateArm2(self.currentJointAngles[2])
@@ -379,8 +395,12 @@ class RobotArm:
         self.arm3.rotate(degY, 0, 0, 1)
 
         # Translations due to arm1 moving
-        distFromCenter = self.arm1Length * math.sin(self.currentJointAngles[1] * math.pi / 180) + self.arm2Length * math.sin(self.currentJointAngles[2] * math.pi / 180)
-        changeInHeight = (self.arm1Length * math.cos(self.currentJointAngles[1] * math.pi / 180) + self.arm2Length * math.cos(self.currentJointAngles[2] * math.pi / 180)) - (self.arm1Length + self.arm2Length)
+        distFromCenter = self.arm1Length * math.sin(
+            self.currentJointAngles[1] * math.pi / 180) + self.arm2Length * math.sin(
+            self.currentJointAngles[2] * math.pi / 180)
+        changeInHeight = (self.arm1Length * math.cos(
+            self.currentJointAngles[1] * math.pi / 180) + self.arm2Length * math.cos(
+            self.currentJointAngles[2] * math.pi / 180)) - (self.arm1Length + self.arm2Length)
 
         # rotate FIRST and tilt
         self.arm3.rotate(degX, 0, 1, 0)
@@ -394,6 +414,9 @@ class RobotArm:
         # Bring back to original cords
         self.arm3.applyTransform(self.initTransformMatrixList[3][-1], False)
 
+        # Update other limbs
+        self.updatePaddle()
+
     def updateArm3(self):
         # Don't change angle but run other stuff in rotate arm
         self.rotateArm3(self.currentJointAngles[3][0], self.currentJointAngles[3][1])
@@ -403,9 +426,31 @@ class RobotArm:
     # In goes a transformation mat
     def transformPaddle(self, tr):
         # Apply and save transform
-        self.arm3.applyTransform(tr, False)
-        self.initTransformMatrixList[3].append(tr)
+        self.paddle.applyTransform(tr, False)
+        self.initTransformMatrixList[4].append(tr)
 
     def updatePaddle(self):
-        # Don't change angle but run other stuff in rotate arm
-        self.paddle(self.currentJointAngles[3][0], self.currentJointAngles[3][1])
+        # Reset and move to ORIGIN
+        self.paddle.resetTransform()
+        self.paddle.translate(0,
+                              -(self.paddleWidth / 2),
+                              0)
+
+        # rotate around center for one axis of servos
+        self.paddle.rotate(self.currentJointAngles[3][1], 0, 0, 1)
+
+        # Translations due to arm1 moving
+        distFromCenter = self.arm1Length * math.sin(self.currentJointAngles[1] * math.pi / 180) + self.arm2Length * math.sin(self.currentJointAngles[2] * math.pi / 180) + self.arm3Length * math.sin(self.currentJointAngles[3][0] * math.pi / 180)
+        changeInHeight = (self.arm1Length * math.cos(self.currentJointAngles[1] * math.pi / 180) + self.arm2Length * math.cos(self.currentJointAngles[2] * math.pi / 180) + self.arm3Length * math.cos(self.currentJointAngles[3][0] * math.pi / 180)) - (self.arm1Length + self.arm2Length + self.arm3Length)
+
+        # rotate FIRST and tilt
+        self.paddle.rotate(self.currentJointAngles[3][0], 0, 1, 0)
+
+        # Move added cords because of arm 1 and 2
+        self.paddle.translate(distFromCenter, 0, changeInHeight)
+
+        # Rotate because of base
+        self.paddle.rotate(self.currentJointAngles[0], 0, 0, 1)
+
+        # Bring back to original cords
+        self.paddle.applyTransform(self.initTransformMatrixList[4][-1], False)

@@ -56,6 +56,12 @@ def main():
         deg2 += 1
         deg3 += 5
 
+        arm.rotateArm1(35)
+        arm.rotateArm2(125)
+        arm.rotateArm3(90, 0)
+
+
+
         # detect keys
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'):
