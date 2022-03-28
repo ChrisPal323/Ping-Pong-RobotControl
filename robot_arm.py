@@ -38,7 +38,7 @@ class RobotArm:
     currentJointAngles = [0,  # Base Plate (just a number)
                           0,  # Arm 1  (x, y, z)
                           0,  # Arm 2  (x, y, z)
-                          0,  # Arm 3  (x, y, z)
+                          [0, 0],  # Arm 3  (x, y, z)
                           0]  # Paddle (x, y, z)
 
     def __init__(self, w):
@@ -181,7 +181,8 @@ class RobotArm:
 
         # --- Create End Joint ---
         self.arm3Length = 3.25  # meant to be rotated and flapped
-        self.arm3Width = 0.5
+        self.arm3Width = 1
+        self.arm3Height = 53.5
         arm3Colors = np.array([[0.7, 0.7, 0.7, 1] for i in range(12)])
 
         arm3Verts = np.array([[self.arm3Width, 0, 0],  # 0
@@ -197,10 +198,17 @@ class RobotArm:
         self.arm3 = gl.GLMeshItem(vertexes=arm3Verts, faces=renderFaces, faceColors=arm3Colors,
                                   drawEdges=True, edgeColor=(0, 0, 0, 1))
 
-        # Move stands to correct coord
-        self.arm3.translate(self.baseDistFromTable - (self.basePlateLength / 2) - (self.arm3Width / 2),
-                            (self.ytable / 2) - (self.arm3Width / 2),
-                            54)
+        # Move arm to ORIGIN
+        self.arm3.translate(-(self.arm3Width / 2),
+                            -(self.arm3Width / 2),
+                            0)
+
+        # Align with robot
+        arm3Transform = Transform3D()
+        arm3Transform.translate(self.baseDistFromTable - (self.basePlateLength / 2),
+                                (self.ytable / 2),
+                                self.arm3Height)
+        self.transformArm3(arm3Transform)
 
         w.addItem(self.arm3)
 
@@ -304,20 +312,10 @@ class RobotArm:
 
         # Update other arms
         self.updateArm2()
-        #self.updateArm3()
+        self.updateArm3()
 
     def updateArm1(self):
-        self.arm1.resetTransform()
-        # Move arm to ORIGIN
-        self.arm1.translate(-(self.arm1Width / 2),
-                            -(self.arm1Width / 2),
-                            0)
-
-        # Rotate based on new base position
-        self.arm1.rotate(self.currentJointAngles[0], 0, 0, 1)
-
-        # Bring back to original cords
-        self.arm1.applyTransform(self.initTransformMatrixList[1][-1], False)
+        self.rotateArm1(self.currentJointAngles[1])
 
     # ------ Arm 2 Transforms--------
 
@@ -328,69 +326,86 @@ class RobotArm:
         self.initTransformMatrixList[2].append(tr)
 
     def rotateArm2(self, deg):
+
         self.arm2.resetTransform()
         # Move arm to ORIGIN
         self.arm2.translate(-(self.arm2Width / 2),
                             -(self.arm2Width / 2),
                             0)
 
-        # rotate and tilt to base stand
-        self.arm1.rotate(deg, 0, 1, 0)
-        self.arm1.rotate(self.currentJointAngles[0], 0, 0, 1)
-
-        # Bring back to original cords
-        self.basePlate.applyTransform(self.initTransformMatrixList[0][-1], False)
-
-        # TODO: Have other arms react
-
-    def updateArm2(self):
-        self.arm2.resetTransform()
-        # Move arm to ORIGIN
-        self.arm2.translate(-(self.arm2Width / 2),
-                            -(self.arm2Width / 2),
-                            0)
+        # Record angle
+        self.currentJointAngles[2] = deg
 
         # Translations due to arm1 moving
         distFromCenter = self.arm1Length * math.sin(self.currentJointAngles[1] * math.pi / 180)
         changeInHeight = self.arm1Length * math.cos(self.currentJointAngles[1] * math.pi / 180) - self.arm1Length
+
+        # rotate FIRST and tilt to base stand
+        self.arm2.rotate(deg, 0, 1, 0)
+
+        # Move added cords because of arm 1
         self.arm2.translate(distFromCenter, 0, changeInHeight)
 
-        # Rotate based on new base position
         self.arm2.rotate(self.currentJointAngles[0], 0, 0, 1)
 
         # Bring back to original cords
         self.arm2.applyTransform(self.initTransformMatrixList[2][-1], False)
+
+        # Have other arms react
+        self.updateArm3()
+
+    def updateArm2(self):
+        self.rotateArm2(self.currentJointAngles[2])
 
     # ------ Arm 3 Transforms--------
 
     # In goes a transformation mat
     def transformArm3(self, tr):
         # Apply and save transform
-        self.transformArm3.applyTransform(tr, False)
+        self.arm3.applyTransform(tr, False)
         self.initTransformMatrixList[3].append(tr)
 
-    def rotateArm3X(self, deg):
-        # Center to origin
-        invMat, ret = self.initTransformMatrixList[0][-1].inverted()
-        self.basePlate.applyTransform(invMat, False)
+    def rotateArm3(self, degX, degY):
+        self.arm3.resetTransform()
+        # Move arm to ORIGIN
+        self.arm3.translate(-(self.arm2Width / 2),
+                            -(self.arm2Width / 2),
+                            0)
 
-        # Rotate
-        self.basePlate.rotate(deg, 0, 0, 1)
+        # Record angle
+        self.currentJointAngles[3] = [degX, degY]
+
+        # rotate around center for one axis of servos
+        self.arm3.rotate(degY, 0, 0, 1)
+
+        # Translations due to arm1 moving
+        distFromCenter = self.arm1Length * math.sin(self.currentJointAngles[1] * math.pi / 180) + self.arm2Length * math.sin(self.currentJointAngles[2] * math.pi / 180)
+        changeInHeight = (self.arm1Length * math.cos(self.currentJointAngles[1] * math.pi / 180) + self.arm2Length * math.cos(self.currentJointAngles[2] * math.pi / 180)) - (self.arm1Length + self.arm2Length)
+
+        # rotate FIRST and tilt
+        self.arm3.rotate(degX, 0, 1, 0)
+
+        # Move added cords because of arm 1 and 2
+        self.arm3.translate(distFromCenter, 0, changeInHeight)
+
+        # Rotate becuase of base
+        self.arm3.rotate(self.currentJointAngles[0], 0, 0, 1)
 
         # Bring back to original cords
-        self.basePlate.applyTransform(self.initTransformMatrixList[0][-1], False)
+        self.arm3.applyTransform(self.initTransformMatrixList[3][-1], False)
 
-        # TODO: Have other arms react
+    def updateArm3(self):
+        # Don't change angle but run other stuff in rotate arm
+        self.rotateArm3(self.currentJointAngles[3][0], self.currentJointAngles[3][1])
 
-    def rotateArm3Y(self, deg):
-        # Center to origin
-        invMat, ret = self.initTransformMatrixList[0][-1].inverted()
-        self.basePlate.applyTransform(invMat, False)
+    # ------ Paddle Transforms--------
 
-        # Rotate
-        self.basePlate.rotate(deg, 0, 0, 1)
+    # In goes a transformation mat
+    def transformPaddle(self, tr):
+        # Apply and save transform
+        self.arm3.applyTransform(tr, False)
+        self.initTransformMatrixList[3].append(tr)
 
-        # Bring back to original cords
-        self.basePlate.applyTransform(self.initTransformMatrixList[0][-1], False)
-
-        # TODO: Have other arms react
+    def updatePaddle(self):
+        # Don't change angle but run other stuff in rotate arm
+        self.paddle(self.currentJointAngles[3][0], self.currentJointAngles[3][1])

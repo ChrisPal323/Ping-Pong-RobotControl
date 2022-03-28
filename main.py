@@ -45,12 +45,16 @@ def main():
 
     deg1 = 0
     deg2 = 0
+    deg3 = 0
 
     while True:
-        arm.rotateBase(deg1)
-        arm.rotateArm1(deg2)
-        deg1 += 1
-        deg2 += 2
+        #arm.rotateBase(deg2)
+        #arm.rotateArm1(deg2)
+        #arm.rotateArm2(deg1)
+        #arm.rotateArm3(deg2, deg3)
+        deg1 += 0.1
+        deg2 += 1
+        deg3 += 5
 
         # detect keys
         key = cv2.waitKey(1) & 0xFF
