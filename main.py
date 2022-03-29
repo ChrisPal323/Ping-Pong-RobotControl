@@ -52,13 +52,13 @@ def main():
     while True:
 
         solver.compute(0 + pos, 30, 12)
-        solver.plot(w)
-        pos += 0.01
+        solver.plotTarget(w)
 
         # TODO: Weird behavior Sometimes
         arm1, arm2, arm3 = solver.calcJointAngles()
         arm.rotateAllJoints(0, arm1, arm2, arm3, 0)
-        print(arm2)
+
+        pos += 0.01
 
         # detect keys
         key = cv2.waitKey(1) & 0xFF

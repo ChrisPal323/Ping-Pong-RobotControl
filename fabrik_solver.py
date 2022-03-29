@@ -73,8 +73,12 @@ class FabrikSolver3D:
                 marginOfError -> the margin of error for the algorithm.
         """
 
+        # For plotting target Point
         self.plotted = False
-        self.itemsPlotted = [0, 0, 0]
+        self.targetX = 0
+        self.targetY = 0
+        self.targetZ = 0
+        self.targetPoint = None
 
         # Create the base of the chain.
         self.basePoint = np.array([baseX, baseY, baseZ])
@@ -200,6 +204,15 @@ class FabrikSolver3D:
                 targetY -> the target x coordinate to move to.
                 targetZ -> the target z coordinate to move to.
         """
+        # Add to object
+        self.targetX = targetX
+        self.targetY = targetY
+        self.targetZ = targetZ
+
+        # Add to hit on the paddle rather than the end effector
+        #targetZ = targetZ + 1
+
+        # Counter for keep track of too many iterations
         counter = 0
         if self.isReachable(targetX, targetY, targetZ):
             while not self.inMarginOfError(targetX, targetY, targetZ):
@@ -224,48 +237,26 @@ class FabrikSolver3D:
 
         return theta1, theta2, theta3
 
-    def plot(self, w):
-        """
-            Plot the chain.
+    # Plot target Point
+    def plotTarget(self, w):
 
-            Params:
-                save -> choose to save the plot to a file.
-                name -> give the plot a name.
-        """
-
-        # Plot arm.
-        radius = 0.85  # Set radius for point
-        md = gl.MeshData.sphere(rows=10, cols=20, radius=radius)
-
-        if self.plotted is True:
-            for segmentNum in range(len(self.segments)):
-                segment = self.segments[segmentNum - 1]
-                self.itemsPlotted[segmentNum - 1].resetTransform()
-                self.itemsPlotted[segmentNum - 1].translate(*segment.point)
+        if self.plotted:
+            # Move to new target position
+            self.targetPoint.resetTransform()
+            self.targetPoint.translate(self.targetX, self.targetY, self.targetZ)
         else:
-            for segmentNum in range(len(self.segments)):
-                segment = self.segments[segmentNum - 1]
-
-                self.itemsPlotted[segmentNum - 1] = gl.GLMeshItem(
-                    meshdata=md,
-                    smooth=True,
-                    color=(255, 255, 255, 0.3),
-                    shader="balloon",
-                    glOptions="additive",
-                )
-
-                self.itemsPlotted[segmentNum - 1].translate(*segment.point)
-                w.addItem(self.itemsPlotted[segmentNum - 1])
-
-            base = gl.GLMeshItem(
+            # Plot Target Point
+            md = gl.MeshData.sphere(rows=10, cols=20, radius=0.5)
+            self.targetPoint = gl.GLMeshItem(
                 meshdata=md,
                 smooth=True,
                 color=(255, 255, 0, 0.3),
                 shader="balloon",
                 glOptions="additive",
             )
+            w.addItem(self.targetPoint)
+            self.plotted = True
 
-            base.translate(*self.basePoint)
-            w.addItem(base)
-
-        self.plotted = True
+    def removePlottedTarget(self, w):
+        w.removeItem(self.targetPoint)
+        self.plotted = False
