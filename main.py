@@ -1,10 +1,10 @@
 import sys
-import numpy as np
 import cv2
+import numpy as np
 import pyqtgraph.opengl as gl
-from pyqtgraph import Transform3D
 from pyqtgraph.Qt import QtWidgets
 import robot_arm
+import fabrik_solver
 
 # Numbers that work well (in inches) with the graph and keep proper proportions
 xtable = 108
@@ -40,27 +40,31 @@ def main():
 
     # ---- Create Objects to be Moved / Plotted ----
 
+    solver = fabrik_solver.FabrikSolver3D(-16.5, 60 / 2, 11.57)
+    solver.addSegment(21, 0, 0)
+    solver.addSegment(21, 0, 0)
+    solver.addSegment(3.5, 0, 0)
+
     # Create arm
     arm = robot_arm.RobotArm(w)
 
-    deg1 = 0
-    deg2 = 0
-    deg3 = 0
+    pos2 = 0
+    pos1 = 0
 
     while True:
-        #arm.rotateBase(deg2)
-        #arm.rotateArm1(deg2)
-        #arm.rotateArm2(deg1)
-        #arm.rotateArm3(deg2, deg3)
-        deg1 += 0.1
-        deg2 += 1
-        deg3 += 5
 
-        arm.rotateArm1(35)
-        arm.rotateArm2(125)
-        arm.rotateArm3(90, 0)
+        solver.compute(0, 30, 12)
+        solver.plot(w)
 
+        solver.calcJointAngles()
 
+        arm.rotateBase(pos1)
+        arm.rotateArm1(pos1)
+        arm.rotateArm2(pos2)
+        arm.rotateArm3(pos1, pos2)
+
+        pos1 += 3
+        pos2 += 0.5
 
         # detect keys
         key = cv2.waitKey(1) & 0xFF
