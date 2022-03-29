@@ -146,6 +146,11 @@ class RobotArm:
         arm1Transform.translate(self.baseDistFromTable - (self.basePlateLength / 2),
                                 (self.ytable / 2),
                                 self.arm1Height)
+        # Store for IK
+        self.armBasePoint = [self.baseDistFromTable - (self.basePlateLength / 2),
+                             (self.ytable / 2),
+                             self.arm1Height]
+
         self.transformArm1(arm1Transform)
 
         # Add to Frame
@@ -258,7 +263,9 @@ class RobotArm:
     def rotateAllJoints(self, base, arm1, arm2, arm3X, arm3Y):
         self.rotateBase(base)
         self.rotateArm1(arm1)
+        print(f"Arm1 {arm1}")
         self.rotateArm2(arm2)
+        print(f"Arm2 {arm2}")
         self.rotateArm3(arm3X, arm3Y)
 
     # ------ Base Transforms --------
@@ -447,8 +454,14 @@ class RobotArm:
         self.paddle.rotate(self.currentJointAngles[3][1], 0, 0, 1)
 
         # Translations due to arm1 moving
-        distFromCenter = self.arm1Length * math.sin(self.currentJointAngles[1] * math.pi / 180) + self.arm2Length * math.sin(self.currentJointAngles[2] * math.pi / 180) + self.arm3Length * math.sin(self.currentJointAngles[3][0] * math.pi / 180)
-        changeInHeight = (self.arm1Length * math.cos(self.currentJointAngles[1] * math.pi / 180) + self.arm2Length * math.cos(self.currentJointAngles[2] * math.pi / 180) + self.arm3Length * math.cos(self.currentJointAngles[3][0] * math.pi / 180)) - (self.arm1Length + self.arm2Length + self.arm3Length)
+        distFromCenter = self.arm1Length * math.sin(
+            self.currentJointAngles[1] * math.pi / 180) + self.arm2Length * math.sin(
+            self.currentJointAngles[2] * math.pi / 180) + self.arm3Length * math.sin(
+            self.currentJointAngles[3][0] * math.pi / 180)
+        changeInHeight = (self.arm1Length * math.cos(
+            self.currentJointAngles[1] * math.pi / 180) + self.arm2Length * math.cos(
+            self.currentJointAngles[2] * math.pi / 180) + self.arm3Length * math.cos(
+            self.currentJointAngles[3][0] * math.pi / 180)) - (self.arm1Length + self.arm2Length + self.arm3Length)
 
         # rotate FIRST and tilt
         self.paddle.rotate(self.currentJointAngles[3][0], 0, 1, 0)

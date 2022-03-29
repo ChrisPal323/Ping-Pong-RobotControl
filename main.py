@@ -38,31 +38,32 @@ def main():
     net.setSize(xnet, ynet)  # Size table
     w.addItem(net)  # Add table to view
 
-    # ---- Create Objects to be Moved / Plotted ----
+    # --------- Create Arm ------------
+    arm = robot_arm.RobotArm(w)
+    pos = 0
 
-    solver = fabrik_solver.FabrikSolver3D(-16.5, 60 / 2, 11.57)
+    # ------- Create IK Solver ------
+    solver = fabrik_solver.FabrikSolver3D(arm.armBasePoint)
     solver.addSegment(21, 0, 0)
     solver.addSegment(21, 0, 0)
     solver.addSegment(3.5, 0, 0)
 
-    # Create arm
-    arm = robot_arm.RobotArm(w)
-    pos = 0
-
     while True:
 
-        solver.compute(0 + pos, 30, 12)
+        solver.compute(0 + pos, 30, 12 + pos / 2)
         solver.plotTarget(w)
 
         # TODO: Weird behavior Sometimes
         arm1, arm2, arm3 = solver.calcJointAngles()
         arm.rotateAllJoints(0, arm1, arm2, arm3, 0)
 
+        # Increase Pos
         pos += 0.01
 
         # detect keys
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'):
+
             break
         elif key != 255:
             print('KEY PRESS:', [chr(key)])

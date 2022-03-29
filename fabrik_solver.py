@@ -63,7 +63,7 @@ class FabrikSolver3D:
         An inverse kinematics solver in 3D. Uses the Fabrik Algorithm.
     """
 
-    def __init__(self, baseX=0, baseY=0, baseZ=0, marginOfError=0.01):
+    def __init__(self, base=[0, 0, 0], marginOfError=0.01):
         """
             Params:
                 baseX -> x component of the base.
@@ -80,8 +80,11 @@ class FabrikSolver3D:
         self.targetZ = 0
         self.targetPoint = None
 
+        # Offset to center in paddle
+        #self.zOffset = 3
+
         # Create the base of the chain.
-        self.basePoint = np.array([baseX, baseY, baseZ])
+        self.basePoint = np.array(base)
 
         # Initialize empty segment array -> [].
         self.segments = []
@@ -156,9 +159,9 @@ class FabrikSolver3D:
             Use in simulations or other systems who require motion that converges over time.
 
             Params:
-                targetX -> the target x coördinate to move to.
-                targetY -> the target y coördinate to move to.
-                targetZ -> the target y coördinate to move to.
+                targetX -> the target x coordinate to move to.
+                targetY -> the target y coordinate to move to.
+                targetZ -> the target y coordinate to move to.
         """
 
         target = np.array([targetX, targetY, targetZ])
@@ -210,7 +213,7 @@ class FabrikSolver3D:
         self.targetZ = targetZ
 
         # Add to hit on the paddle rather than the end effector
-        #targetZ = targetZ + 1
+        targetZ = targetZ
 
         # Counter for keep track of too many iterations
         counter = 0
@@ -226,7 +229,7 @@ class FabrikSolver3D:
     # calc the angle of the line with the point before the current segment number and the y axis
     def calcJointAngles(self):
 
-        theta1 = math.atan((self.segments[0].point[2] - self.basePoint[2]) / (self.segments[0].point[2] - self.basePoint[0])) * 180 / math.pi
+        theta1 = math.atan((self.segments[0].point[2] - self.basePoint[2]) / (self.segments[0].point[0] - self.basePoint[0])) * 180 / math.pi
         theta2 = math.atan((self.segments[1].point[2] - self.segments[0].point[2]) / (self.segments[1].point[0] - self.segments[0].point[0])) * 180 / math.pi
         theta3 = math.atan((self.segments[2].point[2] - self.segments[1].point[2]) / (self.segments[2].point[0] - self.segments[1].point[0])) * 180 / math.pi
 
