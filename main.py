@@ -47,24 +47,18 @@ def main():
 
     # Create arm
     arm = robot_arm.RobotArm(w)
-
-    pos2 = 0
-    pos1 = 0
+    pos = 0
 
     while True:
 
-        solver.compute(0, 30, 12)
+        solver.compute(0 + pos, 30, 12)
         solver.plot(w)
+        pos += 0.01
 
-        solver.calcJointAngles()
-
-        arm.rotateBase(pos1)
-        arm.rotateArm1(pos1)
-        arm.rotateArm2(pos2)
-        arm.rotateArm3(pos1, pos2)
-
-        pos1 += 3
-        pos2 += 0.5
+        # TODO: Weird behavior Sometimes
+        arm1, arm2, arm3 = solver.calcJointAngles()
+        arm.rotateAllJoints(0, arm1, arm2, arm3, 0)
+        print(arm2)
 
         # detect keys
         key = cv2.waitKey(1) & 0xFF

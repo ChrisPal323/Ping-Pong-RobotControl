@@ -38,6 +38,9 @@ class Segment3D:
         self.zAngle = zAngle
         self.yAngle = yAngle
 
+        # Current angle
+        self.AngleOnZ = None
+
         # Store the length of the segment.
         self.length = length
 
@@ -115,9 +118,9 @@ class FabrikSolver3D:
             Check if a point in space is reachable by the end-effector.
 
             Params:
-                targetX -> the target x coördinate to check.
-                targetY -> the target y coördinate to check.
-                targetZ -> the target z coördinate to check.
+                targetX -> the target x coordinate to check.
+                targetY -> the target y coordinate to check.
+                targetZ -> the target z coordinate to check.
 
             Returns:
                 Boolean.
@@ -207,12 +210,18 @@ class FabrikSolver3D:
             # closest or not reachable
             pass
 
+    # calc the angle of the line with the point before the current segment number and the y axis
     def calcJointAngles(self):
-        # TODO: Fix this to calculate angle
-        theta1 = math.atan((self.segments[0].point[1] - self.basePoint[1]) / (self.segments[0].point[0] - self.basePoint[0]))
-        #print(self.segments[0].point[1] - self.basePoint[1])
-        theta2 = math.atan((self.segments[1].point[1] - self.segments[0].point[1]) / (self.segments[1].point[0] - self.segments[0].point[0]))
-        theta3 = math.atan((self.segments[2].point[1] - self.segments[1].point[1]) / (self.segments[2].point[0] - self.segments[1].point[0]))
+
+        theta1 = math.atan((self.segments[0].point[2] - self.basePoint[2]) / (self.segments[0].point[2] - self.basePoint[0])) * 180 / math.pi
+        theta2 = math.atan((self.segments[1].point[2] - self.segments[0].point[2]) / (self.segments[1].point[0] - self.segments[0].point[0])) * 180 / math.pi
+        theta3 = math.atan((self.segments[2].point[2] - self.segments[1].point[2]) / (self.segments[2].point[0] - self.segments[1].point[0])) * 180 / math.pi
+
+        # Find angle from Y axis, not x
+        theta1 = 90 - theta1
+        theta2 = 90 - theta2
+        theta3 = 90 - theta3
+
         return theta1, theta2, theta3
 
     def plot(self, w):

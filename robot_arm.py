@@ -254,6 +254,13 @@ class RobotArm:
         # Add to Frame
         w.addItem(self.paddle)
 
+    # --------- Global Methods ----------
+    def rotateAllJoints(self, base, arm1, arm2, arm3X, arm3Y):
+        self.rotateBase(base)
+        self.rotateArm1(arm1)
+        self.rotateArm2(arm2)
+        self.rotateArm3(arm3X, arm3Y)
+
     # ------ Base Transforms --------
 
     # In goes a transformation mat
