@@ -43,23 +43,40 @@ def main():
 
     # ------- Create IK Solver ------
     solver = fabrik_solver.FabrikSolver(arm)
-    pos = 0
-    movePos = True
+    pos1 = 0
+    pos2 = 0
+    movePos1 = True
+    movePos2 = True
 
     while True:
-        solver.computeAndUpdate(10, 50 - pos * 2, 12)
-        #solver.computeAndUpdate(10 + pos, 30, 12)
+
+        #  ----- Just Some Testing -----
+        solver.computeAndUpdate(10, 30 - pos1 * 2, 12)
+        #solver.computeAndUpdate(10, 30, 12)
+        arm.rotateArm3(90-pos2, 0)
         solver.plotTarget(w)
 
         # Increase Pos
-        if movePos:
-            pos += 0.01
-            if pos > 25:
-                movePos = False
+        if movePos1:
+            pos1 += 0.01
+            if pos1 > 15:
+                movePos1 = False
         else:
-            pos -= 0.01
-            if pos < -5:
-                movePos = True
+            pos1 -= 0.01
+            if pos1 < -15:
+                movePos1 = True
+
+        # Increase Pos
+        if movePos2:
+            pos2 += 0.5
+            if pos2 > 15:
+                movePos2 = False
+        else:
+            pos2 -= 0.5
+            if pos2 < -15:
+                movePos2 = True
+
+        #  ----- Just Some Testing -----
 
         # detect keys
         key = cv2.waitKey(1) & 0xFF
