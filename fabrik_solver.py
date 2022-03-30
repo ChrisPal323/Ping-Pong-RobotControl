@@ -7,10 +7,8 @@ import pyqtgraph.opengl as gl
 def unitVector(vector):
     """
         Returns the unit vector of a given input vector.
-
         Params:
             vector -> input vector.
-
         Returns:
             numpy.array().
     """
@@ -18,7 +16,7 @@ def unitVector(vector):
     return vector / np.linalg.norm(vector)
 
 
-class Segment3D:
+class Segment:
     """
         A part of the FabrikSolver3D to store a part of an inverse kinematics chain.
     """
@@ -29,7 +27,6 @@ class Segment3D:
                 referenceX -> x component of the reference point.
                 referenceY -> y component of the reference point.
                 referenceZ -> Z component of the reference point.
-
                 length -> length of the segment.
                 zAngle -> initial angle along the z-axis of the segment.
                 yAngle -> initial angle along the y-axis of the segment.
@@ -58,18 +55,17 @@ class Segment3D:
         self.point = np.array([newX, newY, newZ])
 
 
-class FabrikSolver3D:
+class FabrikSolver:
     """
         An inverse kinematics solver in 3D. Uses the Fabrik Algorithm.
     """
 
-    def __init__(self, base=[0, 0, 0], marginOfError=0.01):
+    def __init__(self, arm, marginOfError=0.01):
         """
             Params:
                 baseX -> x component of the base.
                 baseY -> y coordinate of the base.
                 baseZ -> z coordinate of the base.
-
                 marginOfError -> the margin of error for the algorithm.
         """
 
@@ -80,11 +76,8 @@ class FabrikSolver3D:
         self.targetZ = 0
         self.targetPoint = None
 
-        # Offset to center in paddle
-        #self.zOffset = 3
-
         # Create the base of the chain.
-        self.basePoint = np.array(base)
+        self.basePoint = np.array(arm.armBasePoint)
 
         # Initialize empty segment array -> [].
         self.segments = []
@@ -95,11 +88,16 @@ class FabrikSolver3D:
         # Initialize the margin of error
         self.marginOfError = marginOfError
 
+        # Init Arm!
+        self.arm = arm
+        # Initial / Home Position
+        self.addSegment(arm.arm1Length, 0, 45)
+        self.addSegment(arm.arm2Length, 0, 0)
+
     def addSegment(self, length, zAngle, yAngle):
 
         """
             Add new segment to chain with respect to the last segment.
-
             Params:
                 length -> length of the segment.
                 zAngle -> initial angle of the segment along the z axis.
@@ -108,11 +106,11 @@ class FabrikSolver3D:
 
         if len(self.segments) > 0:
 
-            segment = Segment3D(self.segments[-1].point[0], self.segments[-1].point[1], self.segments[-1].point[2],
+            segment = Segment(self.segments[-1].point[0], self.segments[-1].point[1], self.segments[-1].point[2],
                                 length, zAngle + self.segments[-1].zAngle, self.segments[-1].yAngle + yAngle)
         else:
             # Create a segment of the vector start point, length and angle.
-            segment = Segment3D(self.basePoint[0], self.basePoint[1], self.basePoint[2], length, zAngle, yAngle)
+            segment = Segment(self.basePoint[0], self.basePoint[1], self.basePoint[2], length, zAngle, yAngle)
 
         # Add length to the total arm length.
         self.armLength += segment.length
@@ -123,12 +121,10 @@ class FabrikSolver3D:
     def isReachable(self, targetX, targetY, targetZ):
         """
             Check if a point in space is reachable by the end-effector.
-
             Params:
                 targetX -> the target x coordinate to check.
                 targetY -> the target y coordinate to check.
                 targetZ -> the target z coordinate to check.
-
             Returns:
                 Boolean.
         """
@@ -140,12 +136,10 @@ class FabrikSolver3D:
     def inMarginOfError(self, targetX, targetY, targetZ):
         """
             Check if the distance of a point in space and the end-effector is smaller than the margin of error.
-
             Params:
                 targetX -> the target x coördinate to check.
                 targetY -> the target y coördinate to check.
                 targetZ -> the target z coördinate to check.
-
             Returns:
                 Boolean.
         """
@@ -157,7 +151,6 @@ class FabrikSolver3D:
         """
             Do one iteration of the fabrik algorithm. Used in the compute function.
             Use in simulations or other systems who require motion that converges over time.
-
             Params:
                 targetX -> the target x coordinate to move to.
                 targetY -> the target y coordinate to move to.
@@ -197,12 +190,13 @@ class FabrikSolver3D:
                 self.segments[i].point = (unitVector(self.segments[i].point - self.segments[i - 1].point) *
                                           self.segments[i].length) + self.segments[i - 1].point
 
-    def compute(self, targetX, targetY, targetZ):
+    def computeAndUpdate(self, targetX, targetY, targetZ):
 
         """
             Iterate the fabrik algorithm until the distance from the end-effector to the target is within the margin of error.
-
             Params:
+                target is POS OF BALL
+                We want an offset to keep the
                 targetX -> the target x coordinate to move to.
                 targetY -> the target x coordinate to move to.
                 targetZ -> the target z coordinate to move to.
@@ -212,33 +206,62 @@ class FabrikSolver3D:
         self.targetY = targetY
         self.targetZ = targetZ
 
-        # Add to hit on the paddle rather than the end effector
-        targetZ = targetZ
+        # Check if target is directly in line with base, now only 2D IK, probably should fix later
+        if math.atan((self.targetY - self.basePoint[1]) / (self.targetX - self.basePoint[0])) * 180 / math.pi == 0:
 
-        # Counter for keep track of too many iterations
-        counter = 0
-        if self.isReachable(targetX, targetY, targetZ):
-            while not self.inMarginOfError(targetX, targetY, targetZ):
-                self.iterate(targetX, targetY, targetZ)
-                counter += 1
-                if counter > 1000: sys.exit()
+            # Target is directly in front of arm, do normal IK
+            if self.isReachable(targetX, targetY, targetZ):
+                while not self.inMarginOfError(targetX, targetY, targetZ):
+                    self.iterate(targetX, targetY, targetZ)
+
+                # Done with loop
+                # TODO: Weird behavior Sometimes
+                base, arm1, arm2 = self.calcJointAngles()
+                self.arm.rotateAllJoints(base, arm1, arm2, 90, 0)
+
+            else:
+                print("Closest I can get, or not reachable")
         else:
-            # closest or not reachable
+            # Do circle math to calc new distance, Object is NOT in front of arm
+
+            # Get top down distance from target to base point, only XY plane
+            targetDist = math.sqrt(((self.basePoint[0] - self.targetX)**2) + ((self.basePoint[1] - self.targetY)**2))
+
+            # Adjust new target position with new distance
+            tempTargetX = targetDist + self.basePoint[0]
+            # Line up with base point on Y axis
+            tempTargetY = self.basePoint[1]
+
+            # IK with new point, we didn't touch Z
+            if self.isReachable(tempTargetX, tempTargetY, targetZ):
+                while not self.inMarginOfError(tempTargetX, tempTargetY, targetZ):
+                    self.iterate(tempTargetX, tempTargetY, targetZ)
+
+                # Done with loop
+                # TODO: Weird behavior Sometimes
+                base, arm1, arm2 = self.calcJointAngles()
+                # Rotate Base! Should line up now
+                self.arm.rotateAllJoints(base, arm1, arm2, 90, 0)
+
+            else:
+                print("Closest I can get, or not reachable")
             pass
 
-    # calc the angle of the line with the point before the current segment number and the y axis
+
+    # calc the angle of the line with the point before the current segment number and the x or z axis
     def calcJointAngles(self):
 
+        # Top down angle of base, ray from base point to targeted point (x, y) plane
+        theta0 = math.atan((self.targetY - self.basePoint[1]) / (self.targetX - self.basePoint[0])) * 180 / math.pi
+
+        # Vertical angles of arms (x, z) plane
         theta1 = math.atan((self.segments[0].point[2] - self.basePoint[2]) / (self.segments[0].point[0] - self.basePoint[0])) * 180 / math.pi
         theta2 = math.atan((self.segments[1].point[2] - self.segments[0].point[2]) / (self.segments[1].point[0] - self.segments[0].point[0])) * 180 / math.pi
-        theta3 = math.atan((self.segments[2].point[2] - self.segments[1].point[2]) / (self.segments[2].point[0] - self.segments[1].point[0])) * 180 / math.pi
-
-        # Find angle from Y axis, not x
+        # Find angle from z axis, not x
         theta1 = 90 - theta1
         theta2 = 90 - theta2
-        theta3 = 90 - theta3
 
-        return theta1, theta2, theta3
+        return theta0, theta1, theta2
 
     # Plot target Point
     def plotTarget(self, w):
@@ -253,7 +276,7 @@ class FabrikSolver3D:
             self.targetPoint = gl.GLMeshItem(
                 meshdata=md,
                 smooth=True,
-                color=(255, 255, 0, 0.3),
+                color=(255, 0, 255, 0.3),
                 shader="balloon",
                 glOptions="additive",
             )

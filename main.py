@@ -40,25 +40,26 @@ def main():
 
     # --------- Create Arm ------------
     arm = robot_arm.RobotArm(w)
-    pos = 0
 
     # ------- Create IK Solver ------
-    solver = fabrik_solver.FabrikSolver3D(arm.armBasePoint)
-    solver.addSegment(21, 0, 0)
-    solver.addSegment(21, 0, 0)
-    solver.addSegment(3.5, 0, 0)
+    solver = fabrik_solver.FabrikSolver(arm)
+    pos = 0
+    movePos = True
 
     while True:
-
-        solver.compute(0 + pos, 30, 12 + pos / 2)
+        solver.computeAndUpdate(10, 50 - pos * 2, 12)
+        #solver.computeAndUpdate(10 + pos, 30, 12)
         solver.plotTarget(w)
 
-        # TODO: Weird behavior Sometimes
-        arm1, arm2, arm3 = solver.calcJointAngles()
-        arm.rotateAllJoints(0, arm1, arm2, arm3, 0)
-
         # Increase Pos
-        pos += 0.01
+        if movePos:
+            pos += 0.01
+            if pos > 25:
+                movePos = False
+        else:
+            pos -= 0.01
+            if pos < -5:
+                movePos = True
 
         # detect keys
         key = cv2.waitKey(1) & 0xFF

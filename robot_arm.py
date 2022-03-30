@@ -35,14 +35,14 @@ class RobotArm:
                                         deque(maxlen=4),  # Paddle
                                         None])
 
-    # All joints and they angle
-    currentJointAngles = [0,  # Base Plate (just a number)
-                          0,  # Arm 1  (x, y, z)
-                          0,  # Arm 2  (x, y, z)
-                          [0, 0],  # Arm 3  (x, y, z)
-                          0]  # Paddle (x, y, z)
-
     def __init__(self, w):
+
+        # All joints and they angle
+        self.currentJointAngles = [0,  # Base Plate (just a number)
+                                   0,  # Arm 1  (x, y, z)
+                                   0,  # Arm 2  (x, y, z)
+                                   [0, 0]]  # Arm 3  (x, y, z)
+
         # Working Cube Faces for all parts
         renderFaces = np.array([[1, 0, 7], [1, 3, 7],
                                 [1, 2, 4], [1, 0, 4],
@@ -162,13 +162,13 @@ class RobotArm:
         self.arm2Height = 32.5
         arm2Colors = np.array([[0.6, 0.6, 0.6, 1] for i in range(12)])
 
-        arm2Verts = np.array([[self.arm2Width, 0, 0],  # 0
-                              [0, 0, 0],  # 1
-                              [0, self.arm2Width, 0],  # 2
-                              [0, 0, self.arm2Length],  # 3
-                              [self.arm2Width, self.arm2Width, 0],  # 4
+        arm2Verts = np.array([[self.arm2Width, 0, 0],                   # 0
+                              [0, 0, 0],                                # 1
+                              [0, self.arm2Width, 0],                   # 2
+                              [0, 0, self.arm2Length],                  # 3
+                              [self.arm2Width, self.arm2Width, 0],                # 4
                               [self.arm2Width, self.arm2Width, self.arm2Length],  # 5
-                              [0, self.arm2Width, self.arm2Length],  # 6
+                              [0, self.arm2Width, self.arm2Length],   # 6
                               [self.arm2Width, 0, self.arm2Length]])  # 7
 
         # Create arm 2
@@ -260,13 +260,30 @@ class RobotArm:
         w.addItem(self.paddle)
 
     # --------- Global Methods ----------
+
+    # Calculate the angles the actuators need to spin
+    # From the absolute angles in the rendering software
+    def calcActuatorJointAngles(self):
+        pass
+
     def rotateAllJoints(self, base, arm1, arm2, arm3X, arm3Y):
         self.rotateBase(base)
         self.rotateArm1(arm1)
-        print(f"Arm1 {arm1}")
         self.rotateArm2(arm2)
-        print(f"Arm2 {arm2}")
         self.rotateArm3(arm3X, arm3Y)
+        print(self.currentJointAngles)
+
+    # Returns that angles for home position of the arm
+    def getHomePositionAngles(self):
+        # return all home position angles
+        pass
+
+    # Basic Flick Paddle toward center of opponents side
+    # Ray between middle of paddle and middle of opponents side
+    # Do math to figure out how a projectile will bounce off the paddle
+    # No spin lol, I ain't touchin' that yet...
+    def flickPaddle(self):
+        pass
 
     # ------ Base Transforms --------
 
