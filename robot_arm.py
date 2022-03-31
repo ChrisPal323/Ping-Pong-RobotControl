@@ -422,6 +422,9 @@ class RobotArm:
         # Record angle
         self.currentJointAngles[3] = [degX, degY]
 
+        # rotate FIRST and tilt
+        self.arm3.rotate(degX, 0, 1, 0)
+
         # rotate around center for one axis of servos
         self.arm3.rotate(degY, 0, 0, 1)
 
@@ -432,9 +435,6 @@ class RobotArm:
         changeInHeight = (self.arm1Length * math.cos(
             self.currentJointAngles[1] * math.pi / 180) + self.arm2Length * math.cos(
             self.currentJointAngles[2] * math.pi / 180)) - (self.arm1Length + self.arm2Length)
-
-        # rotate FIRST and tilt
-        self.arm3.rotate(degX, 0, 1, 0)
 
         # Move added cords because of arm 1 and 2
         self.arm3.translate(distFromCenter, 0, changeInHeight)
