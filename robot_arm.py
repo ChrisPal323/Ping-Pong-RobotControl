@@ -266,12 +266,10 @@ class RobotArm:
     def calcActuatorJointAngles(self):
         pass
 
-    def rotateAllJoints(self, base, arm1, arm2, arm3X, arm3Y):
+    def rotateAllJoints(self, base, arm1, arm2):
         self.rotateBase(base)
         self.rotateArm1(arm1)
         self.rotateArm2(arm2)
-        self.rotateArm3(arm3X, arm3Y)
-        print(self.currentJointAngles)
 
     # Returns that angles for home position of the arm
     def getHomePositionAngles(self):
@@ -425,8 +423,15 @@ class RobotArm:
         # rotate FIRST and tilt
         self.arm3.rotate(degX, 0, 1, 0)
 
+        # Used to reposition the axis of rotation for arm3 to work as the ones irl
+        tempAngle = 90 - self.currentJointAngles[2]
+        self.arm3.rotate(-tempAngle, 0, 1, 0)
+
         # rotate around center for one axis of servos
-        self.arm3.rotate(degY, 0, 0, 1)
+        self.arm3.rotate(degY, 1, 0, 0)
+
+        # Used to reposition the axis of rotation for arm3 to work as the ones irl
+        self.arm3.rotate(-tempAngle, 0, 1, 0)
 
         # Translations due to arm1 moving
         distFromCenter = self.arm1Length * math.sin(
@@ -467,8 +472,13 @@ class RobotArm:
                               -(self.paddleWidth / 2),
                               0)
 
+        # Math to rotate the arm3 the way I have the servos set
+        zAngle = 180 - self.currentJointAngles[2]
+        zPortion = zAngle / 90
+        xPortion = (90-zAngle) / 90
+
         # rotate around center for one axis of servos
-        self.paddle.rotate(self.currentJointAngles[3][1], 0, 0, 1)
+        self.paddle.rotate(self.currentJointAngles[3][1], -xPortion, 0, zPortion)
 
         # Translations due to arm1 moving
         distFromCenter = self.arm1Length * math.sin(
@@ -484,7 +494,7 @@ class RobotArm:
         self.paddle.rotate(self.currentJointAngles[3][0], 0, 1, 0)
 
         # Move added cords because of arm 1 and 2
-        self.paddle.translate(distFromCenter, 0, changeInHeight)
+        #self.paddle.translate(distFromCenter, 0, changeInHeight)
 
         # Rotate because of base
         self.paddle.rotate(self.currentJointAngles[0], 0, 0, 1)

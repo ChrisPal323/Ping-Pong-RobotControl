@@ -214,10 +214,9 @@ class FabrikSolver:
                 while not self.inMarginOfError(targetX, targetY, targetZ):
                     self.iterate(targetX, targetY, targetZ)
 
-                # Done with loop
-                # TODO: Weird behavior Sometimes
+                # Done with loop, move joint to IK Point
                 base, arm1, arm2 = self.calcJointAngles()
-                self.arm.rotateAllJoints(base, arm1, arm2, 90, 0)
+                self.arm.rotateAllJoints(base, arm1, arm2)
 
             else:
                 print("Closest I can get, or not reachable")
@@ -241,12 +240,11 @@ class FabrikSolver:
                 # TODO: Weird behavior Sometimes
                 base, arm1, arm2 = self.calcJointAngles()
                 # Rotate Base! Should line up now
-                self.arm.rotateAllJoints(base, arm1, arm2, 90, 0)
+                self.arm.rotateAllJoints(base, arm1, arm2)
 
             else:
                 print("Closest I can get, or not reachable")
             pass
-
 
     # calc the angle of the line with the point before the current segment number and the x or z axis
     def calcJointAngles(self):

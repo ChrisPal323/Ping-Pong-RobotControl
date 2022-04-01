@@ -51,12 +51,12 @@ def main():
     while True:
 
         #  ----- Just Some Testing -----
-        #solver.computeAndUpdate(10, 30 - pos1 * 2, 12)
+        solver.computeAndUpdate(10, 30 - pos1 * 2, 12)
         #solver.computeAndUpdate(10, 30, 12)
         solver.plotTarget(w)
 
-        # TODO: TUNE ARM3
-        arm.rotateArm3(90, 45)
+        # Rotate Arm3
+        arm.rotateArm3(90, pos1*30)
 
         # Increase Pos
         if movePos1:
