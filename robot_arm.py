@@ -36,12 +36,17 @@ class RobotArm:
                                         None])
 
     def __init__(self, w):
-
         # All joints and they angle
         self.currentJointAngles = [0,  # Base Plate (just a number)
                                    0,  # Arm 1  (x, y, z)
                                    0,  # Arm 2  (x, y, z)
                                    [0, 0]]  # Arm 3  (x, y, z)
+
+        # All Angles for Motors to Drive each joint
+        self.motorJointAngles = [0,  # Base Plate (just a number)
+                                 0,  # Arm 1  (x, y, z)
+                                 0,  # Arm 2  (x, y, z)
+                                 [0, 0]]  # Arm 3  (x, y, z)
 
         # Working Cube Faces for all parts
         renderFaces = np.array([[1, 0, 7], [1, 3, 7],
@@ -162,13 +167,13 @@ class RobotArm:
         self.arm2Height = 32.5
         arm2Colors = np.array([[0.6, 0.6, 0.6, 1] for i in range(12)])
 
-        arm2Verts = np.array([[self.arm2Width, 0, 0],                   # 0
-                              [0, 0, 0],                                # 1
-                              [0, self.arm2Width, 0],                   # 2
-                              [0, 0, self.arm2Length],                  # 3
-                              [self.arm2Width, self.arm2Width, 0],                # 4
+        arm2Verts = np.array([[self.arm2Width, 0, 0],  # 0
+                              [0, 0, 0],  # 1
+                              [0, self.arm2Width, 0],  # 2
+                              [0, 0, self.arm2Length],  # 3
+                              [self.arm2Width, self.arm2Width, 0],  # 4
                               [self.arm2Width, self.arm2Width, self.arm2Length],  # 5
-                              [0, self.arm2Width, self.arm2Length],   # 6
+                              [0, self.arm2Width, self.arm2Length],  # 6
                               [self.arm2Width, 0, self.arm2Length]])  # 7
 
         # Create arm 2
@@ -257,14 +262,19 @@ class RobotArm:
         self.transformPaddle(paddleTransform)
 
         # Add to Frame
-        w.addItem(self.paddle)
+        # TODO: FIX!!!
+        #w.addItem(self.paddle)
 
     # --------- Global Methods ----------
 
     # Calculate the angles the actuators need to spin
     # From the absolute angles in the rendering software
     def calcActuatorJointAngles(self):
-        pass
+        self.motorJointAngles[0] = self.currentJointAngles[0] % 360
+        self.motorJointAngles[1] = self.currentJointAngles[1] % 360
+        self.motorJointAngles[2] = (self.currentJointAngles[2] - self.currentJointAngles[1]) % 360
+        self.motorJointAngles[3][0] = (self.currentJointAngles[3][0] - self.currentJointAngles[2]) % 360
+        self.motorJointAngles[3][1] = self.currentJointAngles[3][1] % 360
 
     def rotateAllJoints(self, base, arm1, arm2):
         self.rotateBase(base)
@@ -327,6 +337,7 @@ class RobotArm:
         self.updateArm1()
         self.updateArm2()
         self.updateArm3()
+        self.calcActuatorJointAngles()
         self.updatePaddle()
 
     # ------ Arm 1 Transforms --------
@@ -357,6 +368,7 @@ class RobotArm:
         # Update other arms
         self.updateArm2()
         self.updateArm3()
+        self.calcActuatorJointAngles()
         self.updatePaddle()
 
     def updateArm1(self):
@@ -397,6 +409,7 @@ class RobotArm:
 
         # Have other arms react
         self.updateArm3()
+        self.calcActuatorJointAngles()
         self.updatePaddle()
 
     def updateArm2(self):
@@ -424,14 +437,12 @@ class RobotArm:
         self.arm3.rotate(degX, 0, 1, 0)
 
         # Used to reposition the axis of rotation for arm3 to work as the ones irl
-        tempAngle = 90 - self.currentJointAngles[2]
-        self.arm3.rotate(-tempAngle, 0, 1, 0)
+        self.arm3.rotate(-self.currentJointAngles[2], 0, 1, 0)
 
         # rotate around center for one axis of servos
-        self.arm3.rotate(degY, 1, 0, 0)
+        self.arm3.rotate(degY, 0, 0, 1)
 
-        # Used to reposition the axis of rotation for arm3 to work as the ones irl
-        self.arm3.rotate(-tempAngle, 0, 1, 0)
+        self.arm3.rotate(self.currentJointAngles[2], 0, 1, 0)
 
         # Translations due to arm1 moving
         distFromCenter = self.arm1Length * math.sin(
@@ -451,6 +462,7 @@ class RobotArm:
         self.arm3.applyTransform(self.initTransformMatrixList[3][-1], False)
 
         # Update other limbs
+        self.calcActuatorJointAngles()
         self.updatePaddle()
 
     def updateArm3(self):
@@ -472,31 +484,36 @@ class RobotArm:
                               -(self.paddleWidth / 2),
                               0)
 
-        # Math to rotate the arm3 the way I have the servos set
-        zAngle = 180 - self.currentJointAngles[2]
-        zPortion = zAngle / 90
-        xPortion = (90-zAngle) / 90
+        # rotate FIRST and tilt
+        self.paddle.rotate(180 - self.currentJointAngles[3][0], 0, 1, 0)
+
+        # Used to reposition the axis of rotation for arm3 to work as the ones irl
+        tempAngle = -90 - self.currentJointAngles[2]
+        self.paddle.rotate(-tempAngle, 0, 1, 0)
 
         # rotate around center for one axis of servos
-        self.paddle.rotate(self.currentJointAngles[3][1], -xPortion, 0, zPortion)
+        self.paddle.rotate(self.currentJointAngles[3][1], 1, 0, 0)
+
+        # Used to reposition the axis of rotation for arm3 to work as the ones irl
+        self.paddle.rotate(-tempAngle, 0, 1, 0)
+
+        # Used to reposition the axis of rotation for arm3 to work as the ones irl
+        self.paddle.rotate(180, 1, 0, 0)
 
         # Translations due to arm1 moving
         distFromCenter = self.arm1Length * math.sin(
             self.currentJointAngles[1] * math.pi / 180) + self.arm2Length * math.sin(
             self.currentJointAngles[2] * math.pi / 180) + self.arm3Length * math.sin(
-            self.currentJointAngles[3][0] * math.pi / 180)
+            self.currentJointAngles[3][1] * math.pi / 180)
         changeInHeight = (self.arm1Length * math.cos(
             self.currentJointAngles[1] * math.pi / 180) + self.arm2Length * math.cos(
             self.currentJointAngles[2] * math.pi / 180) + self.arm3Length * math.cos(
             self.currentJointAngles[3][0] * math.pi / 180)) - (self.arm1Length + self.arm2Length + self.arm3Length)
 
-        # rotate FIRST and tilt
-        self.paddle.rotate(self.currentJointAngles[3][0], 0, 1, 0)
-
         # Move added cords because of arm 1 and 2
-        #self.paddle.translate(distFromCenter, 0, changeInHeight)
+        self.paddle.translate(distFromCenter, 0, changeInHeight)
 
-        # Rotate because of base
+        # Rotate becuase of base
         self.paddle.rotate(self.currentJointAngles[0], 0, 0, 1)
 
         # Bring back to original cords

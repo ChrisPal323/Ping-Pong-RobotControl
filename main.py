@@ -51,13 +51,18 @@ def main():
     while True:
 
         #  ----- Just Some Testing -----
-        solver.computeAndUpdate(10, 30 - pos1 * 2, 12)
+        #solver.computeAndUpdate(10, 30 - pos1 * 2, 12)
         #solver.computeAndUpdate(10, 30, 12)
-        solver.plotTarget(w)
+        arm.rotateArm1(15)
+        arm.rotateArm2(30)
 
         # Rotate Arm3
-        arm.rotateArm3(90, pos1*30)
+        arm.rotateArm3(45, pos1*30)
+        #arm.rotateArm3(45, 0)
 
+        print(arm.motorJointAngles)
+
+        solver.plotTarget(w)
         # Increase Pos
         if movePos1:
             pos1 += 0.01

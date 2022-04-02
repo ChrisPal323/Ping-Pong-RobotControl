@@ -237,7 +237,6 @@ class FabrikSolver:
                     self.iterate(tempTargetX, tempTargetY, targetZ)
 
                 # Done with loop
-                # TODO: Weird behavior Sometimes
                 base, arm1, arm2 = self.calcJointAngles()
                 # Rotate Base! Should line up now
                 self.arm.rotateAllJoints(base, arm1, arm2)
