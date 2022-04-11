@@ -42,46 +42,32 @@ def main():
     arm = robot_arm.RobotArm(w)
 
     # ------- Create IK Solver ------
-    solver = fabrik_solver.FabrikSolver(arm)
-    pos1 = 0
-    pos2 = 0
-    movePos1 = True
-    movePos2 = True
+    solver = fabrik_solver.FabrikSolver(arm, w)
+    pos = 0
+    movePos = True
 
     while True:
 
         #  ----- Just Some Testing -----
-        #solver.computeAndUpdate(10, 30 - pos1 * 2, 12)
-        #solver.computeAndUpdate(10, 30, 12)
-        arm.rotateArm1(15)
-        arm.rotateArm2(30)
+        solver.computeAndUpdate(20, 15, 12)
 
-        # Rotate Arm3
-        arm.rotateArm3(45, pos1*30)
-        #arm.rotateArm3(45, 0)
+        # Rebound Goal
+        solver.updatePaddleRebound([95, 30, 0])
+        print(pos)
 
-        print(arm.motorJointAngles)
-
-        solver.plotTarget(w)
-        # Increase Pos
-        if movePos1:
-            pos1 += 0.01
-            if pos1 > 15:
-                movePos1 = False
-        else:
-            pos1 -= 0.01
-            if pos1 < -15:
-                movePos1 = True
+        # Plot Target
+        solver.plotTarget()
+        solver.plotReboundGoal()
 
         # Increase Pos
-        if movePos2:
-            pos2 += 0.5
-            if pos2 > 15:
-                movePos2 = False
+        if movePos:
+            pos += 1
+            if pos == 180:
+                movePos = False
         else:
-            pos2 -= 0.5
-            if pos2 < -15:
-                movePos2 = True
+            pos -= 1
+            if pos == 0:
+                movePos = True
 
         #  ----- Just Some Testing -----
 

@@ -18,7 +18,7 @@ def unitVector(vector):
 
 class Segment:
     """
-        A part of the FabrikSolver3D to store a part of an inverse kinematics chain.
+        A part of the FabrikSolver to store a part of an inverse kinematics chain.
     """
 
     def __init__(self, referenceX, referenceY, referenceZ, length, zAngle, yAngle):
@@ -57,10 +57,10 @@ class Segment:
 
 class FabrikSolver:
     """
-        An inverse kinematics solver in 3D. Uses the Fabrik Algorithm.
+        An inverse kinematics solver. Uses the Fabrik Algorithm.
     """
 
-    def __init__(self, arm, marginOfError=0.01):
+    def __init__(self, arm, w, marginOfError=0.01):
         """
             Params:
                 baseX -> x component of the base.
@@ -70,11 +70,16 @@ class FabrikSolver:
         """
 
         # For plotting target Point
-        self.plotted = False
-        self.targetX = 0
-        self.targetY = 0
-        self.targetZ = 0
-        self.targetPoint = None
+        self.targetIKCords = [0, 0, 0]
+        self.targetIKPoint = None
+        self.targetIKPlotted = False
+
+        self.targetReboundPoint = None
+        self.targetReboundCords = [0, 0, 0]
+        self.targetReboundPlotted = False
+
+        # Set window
+        self.w = w
 
         # Create the base of the chain.
         self.basePoint = np.array(arm.armBasePoint)
@@ -107,7 +112,7 @@ class FabrikSolver:
         if len(self.segments) > 0:
 
             segment = Segment(self.segments[-1].point[0], self.segments[-1].point[1], self.segments[-1].point[2],
-                                length, zAngle + self.segments[-1].zAngle, self.segments[-1].yAngle + yAngle)
+                              length, zAngle + self.segments[-1].zAngle, self.segments[-1].yAngle + yAngle)
         else:
             # Create a segment of the vector start point, length and angle.
             segment = Segment(self.basePoint[0], self.basePoint[1], self.basePoint[2], length, zAngle, yAngle)
@@ -190,6 +195,24 @@ class FabrikSolver:
                 self.segments[i].point = (unitVector(self.segments[i].point - self.segments[i - 1].point) *
                                           self.segments[i].length) + self.segments[i - 1].point
 
+    # calc the angle of the line with the point before the current segment number and the x or z axis
+    def calcJointAngles(self):
+
+        # Top down angle of base, ray from base point to targeted point (x, y) plane
+        theta0 = math.atan(
+            (self.targetIKCords[1] - self.basePoint[1]) / (self.targetIKCords[0] - self.basePoint[0])) * 180 / math.pi
+
+        # Vertical angles of arms (x, z) plane
+        theta1 = math.atan((self.segments[0].point[2] - self.basePoint[2]) / (
+                self.segments[0].point[0] - self.basePoint[0])) * 180 / math.pi
+        theta2 = math.atan((self.segments[1].point[2] - self.segments[0].point[2]) / (
+                self.segments[1].point[0] - self.segments[0].point[0])) * 180 / math.pi
+        # Find angle from z axis, not x
+        theta1 = 90 - theta1
+        theta2 = 90 - theta2
+
+        return theta0, theta1, theta2
+
     def computeAndUpdate(self, targetX, targetY, targetZ):
 
         """
@@ -202,12 +225,11 @@ class FabrikSolver:
                 targetZ -> the target z coordinate to move to.
         """
         # Add to object
-        self.targetX = targetX
-        self.targetY = targetY
-        self.targetZ = targetZ
+        self.targetIKCords = [targetX, targetY, targetZ]
 
         # Check if target is directly in line with base, now only 2D IK, probably should fix later
-        if math.atan((self.targetY - self.basePoint[1]) / (self.targetX - self.basePoint[0])) * 180 / math.pi == 0:
+        if math.atan((self.targetIKCords[1] - self.basePoint[1]) / (
+                self.targetIKCords[0] - self.basePoint[0])) * 180 / math.pi == 0:
 
             # Target is directly in front of arm, do normal IK
             if self.isReachable(targetX, targetY, targetZ):
@@ -224,7 +246,8 @@ class FabrikSolver:
             # Do circle math to calc new distance, Object is NOT in front of arm
 
             # Get top down distance from target to base point, only XY plane
-            targetDist = math.sqrt(((self.basePoint[0] - self.targetX)**2) + ((self.basePoint[1] - self.targetY)**2))
+            targetDist = math.sqrt(
+                ((self.basePoint[0] - self.targetIKCords[0]) ** 2) + ((self.basePoint[1] - self.targetIKCords[1]) ** 2))
 
             # Adjust new target position with new distance
             tempTargetX = targetDist + self.basePoint[0]
@@ -245,41 +268,66 @@ class FabrikSolver:
                 print("Closest I can get, or not reachable")
             pass
 
-    # calc the angle of the line with the point before the current segment number and the x or z axis
-    def calcJointAngles(self):
+    def updatePaddleRebound(self, point):
+        # Point1 is CurrentIKPoint
+        # Point2 is Target Rebound Point
 
-        # Top down angle of base, ray from base point to targeted point (x, y) plane
-        theta0 = math.atan((self.targetY - self.basePoint[1]) / (self.targetX - self.basePoint[0])) * 180 / math.pi
+        self.targetReboundCords = point
 
-        # Vertical angles of arms (x, z) plane
-        theta1 = math.atan((self.segments[0].point[2] - self.basePoint[2]) / (self.segments[0].point[0] - self.basePoint[0])) * 180 / math.pi
-        theta2 = math.atan((self.segments[1].point[2] - self.segments[0].point[2]) / (self.segments[1].point[0] - self.segments[0].point[0])) * 180 / math.pi
-        # Find angle from z axis, not x
-        theta1 = 90 - theta1
-        theta2 = 90 - theta2
+        # Find XY plane slope and angle between them
+        thetaXY = -math.atan((self.targetReboundCords[1] - self.targetIKCords[1]) /
+                             (self.targetReboundCords[0] - self.targetIKCords[0])) * 180 / math.pi
 
-        return theta0, theta1, theta2
+        # Compensate for base rotation
+        thetaXY += self.arm.currentJointAngles[0]
 
-    # Plot target Point
-    def plotTarget(self, w):
+        self.arm.rotateArm3(90, thetaXY)
 
-        if self.plotted:
+    # ---- Plot IK Target Point ----
+    def plotTarget(self):
+
+        if self.targetIKPlotted:
             # Move to new target position
-            self.targetPoint.resetTransform()
-            self.targetPoint.translate(self.targetX, self.targetY, self.targetZ)
+            self.targetIKPoint.resetTransform()
+            self.targetIKPoint.translate(self.targetIKCords[0], self.targetIKCords[1], self.targetIKCords[2])
         else:
             # Plot Target Point
             md = gl.MeshData.sphere(rows=10, cols=20, radius=0.5)
-            self.targetPoint = gl.GLMeshItem(
+            self.targetIKPoint = gl.GLMeshItem(
                 meshdata=md,
                 smooth=True,
                 color=(255, 0, 255, 0.3),
                 shader="balloon",
                 glOptions="additive",
             )
-            w.addItem(self.targetPoint)
-            self.plotted = True
+            self.w.addItem(self.targetIKPoint)
+            self.targetIKPlotted = True
 
-    def removePlottedTarget(self, w):
-        w.removeItem(self.targetPoint)
-        self.plotted = False
+    # ---- Remove IK Target Point ----
+    def removePlottedTarget(self):
+        self.w.removeItem(self.targetIKPoint)
+        self.targetIKPlotted = False
+
+    # ---- Plot IK Paddle Goal Point ----
+    def plotReboundGoal(self):
+        if self.targetReboundPlotted:
+            self.targetReboundPoint.resetTransform()
+            self.targetReboundPoint.translate(self.targetReboundCords[0], self.targetReboundCords[1],
+                                              self.targetReboundCords[2])
+        else:
+            # Plot Target Point
+            md = gl.MeshData.sphere(rows=10, cols=20, radius=2)
+            self.targetReboundPoint = gl.GLMeshItem(
+                meshdata=md,
+                smooth=True,
+                color=(75, 255, 255, 0.3),
+                shader="balloon",
+                glOptions="additive",
+            )
+            self.w.addItem(self.targetReboundPoint)
+            self.targetReboundPlotted = True
+
+    # ---- Plot IK Paddle Goal Point ----
+    def removeReboundGoal(self):
+        self.w.removeItem(self.targetReboundPoint)
+        self.targetReboundPlotted = False

@@ -1,14 +1,8 @@
 import math
-import random
-import sys
-
-import numpy
 import numpy as np
-import cv2
 from collections import deque
 import pyqtgraph.opengl as gl
 from pyqtgraph import Transform3D
-from pyqtgraph.Qt import QtGui
 
 
 class RobotArm:
@@ -28,12 +22,12 @@ class RobotArm:
 
     # Will store all the initial transformations to get to the arm position
     # this is for us to reference and revert and transformations done if needed
-    initTransformMatrixList = np.array([deque(maxlen=4),  # Base Plate
-                                        deque(maxlen=4),  # Arm 1
-                                        deque(maxlen=4),  # Arm 2
-                                        deque(maxlen=4),  # Arm 3
-                                        deque(maxlen=4),  # Paddle
-                                        None])
+    initTransformMatrixList = [deque(maxlen=4),  # Base Plate
+                               deque(maxlen=4),  # Arm 1
+                               deque(maxlen=4),  # Arm 2
+                               deque(maxlen=4),  # Arm 3
+                               deque(maxlen=4)   # Paddle
+                               ]
 
     def __init__(self, w):
         # All joints and they angle
@@ -263,7 +257,7 @@ class RobotArm:
 
         # Add to Frame
         # TODO: FIX!!!
-        #w.addItem(self.paddle)
+        # w.addItem(self.paddle)
 
     # --------- Global Methods ----------
 
@@ -340,6 +334,10 @@ class RobotArm:
         self.calcActuatorJointAngles()
         self.updatePaddle()
 
+    # Run Base Motor
+    def articulateBase(self):
+        pass
+
     # ------ Arm 1 Transforms --------
 
     # In goes a transformation mat
@@ -373,6 +371,10 @@ class RobotArm:
 
     def updateArm1(self):
         self.rotateArm1(self.currentJointAngles[1])
+
+    # Run Arm1 Motors
+    def articulateArm1(self):
+        pass
 
     # ------ Arm 2 Transforms--------
 
@@ -415,6 +417,10 @@ class RobotArm:
     def updateArm2(self):
         self.rotateArm2(self.currentJointAngles[2])
 
+    # Run Arm2 Motor
+    def articulateArm2(self):
+        pass
+
     # ------ Arm 3 Transforms--------
 
     # In goes a transformation mat
@@ -423,7 +429,13 @@ class RobotArm:
         self.arm3.applyTransform(tr, False)
         self.initTransformMatrixList[3].append(tr)
 
-    def rotateArm3(self, degX, degY):
+    def rotateArm3(self, degX=None, degY=None):
+
+        if degX is None:
+            degX = self.currentJointAngles[3][0]
+        if degY is None:
+            degY = self.currentJointAngles[3][1]
+
         self.arm3.resetTransform()
         # Move arm to ORIGIN
         self.arm3.translate(-(self.arm2Width / 2),
@@ -455,7 +467,7 @@ class RobotArm:
         # Move added cords because of arm 1 and 2
         self.arm3.translate(distFromCenter, 0, changeInHeight)
 
-        # Rotate becuase of base
+        # Rotate because of base
         self.arm3.rotate(self.currentJointAngles[0], 0, 0, 1)
 
         # Bring back to original cords
@@ -468,6 +480,14 @@ class RobotArm:
     def updateArm3(self):
         # Don't change angle but run other stuff in rotate arm
         self.rotateArm3(self.currentJointAngles[3][0], self.currentJointAngles[3][1])
+
+    # Run Arm3 Servo!
+    def articulateArm3X(self):
+        pass
+
+    # Run Arm3 Servo!
+    def articulateArm3Y(self):
+        pass
 
     # ------ Paddle Transforms--------
 
