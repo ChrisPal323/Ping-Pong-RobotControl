@@ -3,6 +3,7 @@ import numpy as np
 from collections import deque
 import pyqtgraph.opengl as gl
 from pyqtgraph import Transform3D
+import fabrik_solver
 
 
 class RobotArm:
@@ -26,30 +27,11 @@ class RobotArm:
                                deque(maxlen=4),  # Arm 1
                                deque(maxlen=4),  # Arm 2
                                deque(maxlen=4),  # Arm 3
-                               deque(maxlen=4)   # Paddle
                                ]
 
-    def __init__(self, w):
-        # All joints and they angle
-        self.currentJointAngles = [0,  # Base Plate (just a number)
-                                   0,  # Arm 1  (x, y, z)
-                                   0,  # Arm 2  (x, y, z)
-                                   [0, 0]]  # Arm 3  (x, y, z)
+    # ------ RENDER FUNCTIONS START ---------
 
-        # All Angles for Motors to Drive each joint
-        self.motorJointAngles = [0,  # Base Plate (just a number)
-                                 0,  # Arm 1  (x, y, z)
-                                 0,  # Arm 2  (x, y, z)
-                                 [0, 0]]  # Arm 3  (x, y, z)
-
-        # Working Cube Faces for all parts
-        renderFaces = np.array([[1, 0, 7], [1, 3, 7],
-                                [1, 2, 4], [1, 0, 4],
-                                [1, 2, 6], [1, 3, 6],
-                                [0, 4, 5], [0, 7, 5],
-                                [2, 4, 5], [2, 6, 5],
-                                [3, 6, 5], [3, 7, 5]])
-
+    def createBase(self):
         # --- Create Arm Base ---
         self.basePlateLength = 12  # in inches
         self.baseDistFromTable = -10.5
@@ -67,7 +49,7 @@ class RobotArm:
                                    [self.basePlateLength, 0, -self.basePlateThickness]])  # 7
 
         # Create same stands
-        self.basePlate = gl.GLMeshItem(vertexes=baseStandVerts, faces=renderFaces, faceColors=baseColors,
+        self.basePlate = gl.GLMeshItem(vertexes=baseStandVerts, faces=self.renderFaces, faceColors=baseColors,
                                        drawEdges=True, edgeColor=(0, 0, 0, 1))
 
         # Center at origin
@@ -80,7 +62,7 @@ class RobotArm:
                                 0)
 
         # Add to Frame
-        w.addItem(self.basePlate)
+        self.w.addItem(self.basePlate)
 
         # --- Create Base Stands ---
         self.heightBaseStand = 12.6
@@ -95,9 +77,9 @@ class RobotArm:
                                    [self.widthBaseStand, 0, self.heightBaseStand]])  # 7
 
         # Create same stands
-        self.baseStand1 = gl.GLMeshItem(vertexes=baseStandVerts, faces=renderFaces, faceColors=baseColors,
+        self.baseStand1 = gl.GLMeshItem(vertexes=baseStandVerts, faces=self.renderFaces, faceColors=baseColors,
                                         drawEdges=True, edgeColor=(0, 0, 0, 1))
-        self.baseStand2 = gl.GLMeshItem(vertexes=baseStandVerts, faces=renderFaces, faceColors=baseColors,
+        self.baseStand2 = gl.GLMeshItem(vertexes=baseStandVerts, faces=self.renderFaces, faceColors=baseColors,
                                         drawEdges=True, edgeColor=(0, 0, 0, 1))
 
         # Translate stands to ORIGIN
@@ -113,9 +95,10 @@ class RobotArm:
         self.transformBase(baseTransform)
 
         # Add to Frame
-        w.addItem(self.baseStand1)
-        w.addItem(self.baseStand2)
+        self.w.addItem(self.baseStand1)
+        self.w.addItem(self.baseStand2)
 
+    def createArm1(self):
         # --- Create Arm One ---
         self.arm1Length = 21  # in inches
         self.arm1Width = 1
@@ -132,7 +115,7 @@ class RobotArm:
                               [self.arm1Width, 0, self.arm1Length]])  # 7
 
         # Create same stands
-        self.arm1 = gl.GLMeshItem(vertexes=arm1Verts, faces=renderFaces, faceColors=arm1Colors,
+        self.arm1 = gl.GLMeshItem(vertexes=arm1Verts, faces=self.renderFaces, faceColors=arm1Colors,
                                   drawEdges=True, edgeColor=(0, 0, 0, 1))
 
         # Move stands to ORIGIN
@@ -153,8 +136,9 @@ class RobotArm:
         self.transformArm1(arm1Transform)
 
         # Add to Frame
-        w.addItem(self.arm1)
+        self.w.addItem(self.arm1)
 
+    def createArm2(self):
         # --- Create Arm Two ---
         self.arm2Length = 21  # in inches
         self.arm2Width = 1
@@ -171,7 +155,7 @@ class RobotArm:
                               [self.arm2Width, 0, self.arm2Length]])  # 7
 
         # Create arm 2
-        self.arm2 = gl.GLMeshItem(vertexes=arm2Verts, faces=renderFaces, faceColors=arm2Colors,
+        self.arm2 = gl.GLMeshItem(vertexes=arm2Verts, faces=self.renderFaces, faceColors=arm2Colors,
                                   drawEdges=True, edgeColor=(0, 0, 0, 1))
 
         # Move arm to ORIGIN
@@ -187,8 +171,9 @@ class RobotArm:
         self.transformArm2(arm2Transform)
 
         # Add to Frame
-        w.addItem(self.arm2)
+        self.w.addItem(self.arm2)
 
+    def createArm3(self):
         # --- Create End Joint ---
         self.arm3Length = 3.25  # meant to be rotated and flapped
         self.arm3Width = 1
@@ -205,7 +190,7 @@ class RobotArm:
                               [self.arm3Width, 0, self.arm3Length]])  # 7
 
         # Create same stands
-        self.arm3 = gl.GLMeshItem(vertexes=arm3Verts, faces=renderFaces, faceColors=arm3Colors,
+        self.arm3 = gl.GLMeshItem(vertexes=arm3Verts, faces=self.renderFaces, faceColors=arm3Colors,
                                   drawEdges=True, edgeColor=(0, 0, 0, 1))
 
         # Move arm to ORIGIN
@@ -221,43 +206,42 @@ class RobotArm:
         self.transformArm3(arm3Transform)
 
         # Add to Frame
-        w.addItem(self.arm3)
+        self.w.addItem(self.arm3)
 
-        # --- Create Paddle ---
-        self.paddleLength = 8.75  # meant to be rotated and flapped
-        self.paddleWidth = 6
-        self.paddleHeight = 56.75
-        self.paddleThickness = 0.25
-        self.paddleColors = np.array([[0.5, 0, 0, 1] for i in range(12)])
+    # ------ RENDER FUNCTIONS END ---------
 
-        paddleVerts = np.array([[self.paddleLength, 0, 0],  # 0
-                                [0, 0, 0],  # 1
-                                [0, self.paddleWidth, 0],  # 2
-                                [0, 0, self.paddleThickness],  # 3
-                                [self.paddleLength, self.paddleWidth, 0],  # 4
-                                [self.paddleLength, self.paddleWidth, self.paddleThickness],  # 5
-                                [0, self.paddleWidth, self.paddleThickness],  # 6
-                                [self.paddleLength, 0, self.paddleThickness]])  # 7
+    def __init__(self, w):
 
-        # Create same stands
-        self.paddle = gl.GLMeshItem(vertexes=paddleVerts, faces=renderFaces, faceColors=self.paddleColors,
-                                    drawEdges=True, edgeColor=(0, 0, 0, 1))
+        # Set window
+        self.w = w
 
-        # Move arm to ORIGIN
-        self.paddle.translate(0,
-                              -(self.paddleWidth / 2),
-                              0)
+        # All joints and they angle
+        self.currentJointAngles = [0,  # Base Plate (just a number)
+                                   0,  # Arm 1  (x, y, z)
+                                   0,  # Arm 2  (x, y, z)
+                                   [0, 0]]  # Arm 3  (x, y, z)
 
-        # Align with robot
-        paddleTransform = Transform3D()
-        paddleTransform.translate(self.baseDistFromTable - (self.basePlateLength / 2),
-                                  (self.ytable / 2),
-                                  self.paddleHeight)
-        self.transformPaddle(paddleTransform)
+        # All Angles for Motors to Drive each joint
+        self.motorJointAngles = [0,  # Base Plate (just a number)
+                                 0,  # Arm 1  (x, y, z)
+                                 0,  # Arm 2  (x, y, z)
+                                 [0, 0]]  # Arm 3  (x, y, z)
 
-        # Add to Frame
-        # TODO: FIX!!!
-        # w.addItem(self.paddle)
+        # Working Cube Faces for all parts
+        self.renderFaces = np.array([[1, 0, 7], [1, 3, 7],
+                                     [1, 2, 4], [1, 0, 4],
+                                     [1, 2, 6], [1, 3, 6],
+                                     [0, 4, 5], [0, 7, 5],
+                                     [2, 4, 5], [2, 6, 5],
+                                     [3, 6, 5], [3, 7, 5]])
+        # Create Renderings
+        self.createBase()
+        self.createArm1()
+        self.createArm2()
+        self.createArm3()
+
+        # ------ Create IK solver for arm ------
+        self.solverIK = fabrik_solver.FabrikSolver(self, w)
 
     # --------- Global Methods ----------
 
@@ -332,7 +316,6 @@ class RobotArm:
         self.updateArm2()
         self.updateArm3()
         self.calcActuatorJointAngles()
-        self.updatePaddle()
 
     # Run Base Motor
     def articulateBase(self):
@@ -367,7 +350,6 @@ class RobotArm:
         self.updateArm2()
         self.updateArm3()
         self.calcActuatorJointAngles()
-        self.updatePaddle()
 
     def updateArm1(self):
         self.rotateArm1(self.currentJointAngles[1])
@@ -412,7 +394,6 @@ class RobotArm:
         # Have other arms react
         self.updateArm3()
         self.calcActuatorJointAngles()
-        self.updatePaddle()
 
     def updateArm2(self):
         self.rotateArm2(self.currentJointAngles[2])
@@ -475,7 +456,6 @@ class RobotArm:
 
         # Update other limbs
         self.calcActuatorJointAngles()
-        self.updatePaddle()
 
     def updateArm3(self):
         # Don't change angle but run other stuff in rotate arm
@@ -488,53 +468,3 @@ class RobotArm:
     # Run Arm3 Servo!
     def articulateArm3Y(self):
         pass
-
-    # ------ Paddle Transforms--------
-
-    # In goes a transformation mat
-    def transformPaddle(self, tr):
-        # Apply and save transform
-        self.paddle.applyTransform(tr, False)
-        self.initTransformMatrixList[4].append(tr)
-
-    def updatePaddle(self):
-        # Reset and move to ORIGIN
-        self.paddle.resetTransform()
-        self.paddle.translate(0,
-                              -(self.paddleWidth / 2),
-                              0)
-
-        # rotate FIRST and tilt
-        self.paddle.rotate(180 - self.currentJointAngles[3][0], 0, 1, 0)
-
-        # Used to reposition the axis of rotation for arm3 to work as the ones irl
-        tempAngle = -90 - self.currentJointAngles[2]
-        self.paddle.rotate(-tempAngle, 0, 1, 0)
-
-        # rotate around center for one axis of servos
-        self.paddle.rotate(self.currentJointAngles[3][1], 1, 0, 0)
-
-        # Used to reposition the axis of rotation for arm3 to work as the ones irl
-        self.paddle.rotate(-tempAngle, 0, 1, 0)
-
-        # Used to reposition the axis of rotation for arm3 to work as the ones irl
-        self.paddle.rotate(180, 1, 0, 0)
-
-        # Translations due to arm1 moving
-        distFromCenter = self.arm1Length * math.sin(
-            self.currentJointAngles[1] * math.pi / 180) + self.arm2Length * math.sin(
-            self.currentJointAngles[2] * math.pi / 180) + self.arm3Length * math.sin(
-            self.currentJointAngles[3][1] * math.pi / 180)
-        changeInHeight = (self.arm1Length * math.cos(
-            self.currentJointAngles[1] * math.pi / 180) + self.arm2Length * math.cos(
-            self.currentJointAngles[2] * math.pi / 180) + self.arm3Length * math.cos(
-            self.currentJointAngles[3][0] * math.pi / 180)) - (self.arm1Length + self.arm2Length + self.arm3Length)
-
-        # Move added cords because of arm 1 and 2
-        self.paddle.translate(distFromCenter, 0, changeInHeight)
-
-        # Rotate becuase of base
-        self.paddle.rotate(self.currentJointAngles[0], 0, 0, 1)
-
-        # Bring back to original cords
-        self.paddle.applyTransform(self.initTransformMatrixList[4][-1], False)

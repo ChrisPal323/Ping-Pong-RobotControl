@@ -1,5 +1,4 @@
 import math
-import sys
 import numpy as np
 import pyqtgraph.opengl as gl
 
@@ -269,9 +268,9 @@ class FabrikSolver:
             pass
 
     def updatePaddleRebound(self, point):
+
         # Point1 is CurrentIKPoint
         # Point2 is Target Rebound Point
-
         self.targetReboundCords = point
 
         # Find XY plane slope and angle between them
@@ -281,6 +280,8 @@ class FabrikSolver:
         # Compensate for base rotation
         thetaXY += self.arm.currentJointAngles[0]
 
+        # adjust paddle to be vertical for simplicity from the (90)
+        # TODO: Tweak the flick of paddle
         self.arm.rotateArm3(90, thetaXY)
 
     # ---- Plot IK Target Point ----
